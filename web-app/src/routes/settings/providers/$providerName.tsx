@@ -90,7 +90,10 @@ function ProviderDetail() {
   // This page is the llama.cpp one when the panel below renders, so engine
   // work in flight is this engine's work.
   const engineBusy = useAppState(isEngineWorkInFlight)
-  const { diagnose: diagnoseDevice, diagnoseModel } = Route.useSearch()
+  const { step, diagnose: diagnoseDevice, diagnoseModel } = Route.useSearch()
+  // First-run setup sends the user here to import a model, and the button
+  // blinks until it is used.
+  const [highlightImport, setHighlightImport] = useState(step === 'import_model')
   const [loadingModels, setLoadingModels] = useState<string[]>([])
   const [refreshingModels, setRefreshingModels] = useState(false)
   const [importingModel, setImportingModel] = useState<string | null>(null)
@@ -1091,7 +1094,13 @@ function ProviderDetail() {
                             <Button
                               variant="secondary"
                               size="sm"
+                              data-testid="import-model-trigger"
+                              className={cn(highlightImport && 'relative ring-2 ring-primary')}
+                              onClick={() => setHighlightImport(false)}
                             >
+                              {highlightImport && (
+                                <span className="absolute inset-0 rounded-[inherit] ring-2 ring-primary animate-ping" />
+                              )}
                               <IconFolderPlus
                                 size={18}
                                 className="text-muted-foreground"

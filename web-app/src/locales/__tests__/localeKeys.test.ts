@@ -32,10 +32,6 @@ const COMPLETE_NAMESPACES = ['tools']
 const DYNAMIC_KEYS: Record<string, string[]> = {
   setup: [
     'stageModel',
-    'checkModelResolving',
-    'checkModelWaiting',
-    'checkModelDownloading',
-    'checkModelReady',
     'checkSystemGpu',
     'checkSystemGpuNoDriver',
     'checkSystemCpuOnly',

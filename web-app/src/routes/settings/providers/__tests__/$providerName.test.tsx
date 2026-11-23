@@ -380,6 +380,7 @@ const renderComponent = () => {
 beforeEach(() => {
   vi.clearAllMocks()
   h.params.providerName = 'openai'
+  delete h.search.step
   h.appState.activeModels = []
   h.openaiProvider.api_key = 'sk-primary'
   h.openaiProvider.api_key_fallbacks = ['sk-fallback-1']
@@ -482,6 +483,21 @@ describe('ProviderDetail route', () => {
       h.params.providerName = 'llamacpp'
       renderComponent()
       expect(screen.getByTestId('import-vision')).toBeInTheDocument()
+      expect(screen.getByTestId('import-model-trigger').querySelector('.animate-ping')).toBeNull()
+    })
+
+    // First-run setup sends the user here with `step: 'import_model'`.
+    it('blinks the import button on arrival from setup until it is used', () => {
+      h.params.providerName = 'llamacpp'
+      h.search.step = 'import_model'
+      renderComponent()
+      const button = screen.getByTestId('import-model-trigger')
+      expect(button.className).toContain('ring-primary')
+      expect(button.querySelector('.animate-ping')).not.toBeNull()
+
+      fireEvent.click(button)
+      expect(button.className).not.toContain('ring-primary')
+      expect(button.querySelector('.animate-ping')).toBeNull()
     })
 
     // The engine belongs to llamacpp alone: a remote provider runs no engine

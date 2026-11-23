@@ -1,79 +1,29 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import '@testing-library/jest-dom'
 
 // ---- Module mocks ----------------------------------------------------------
 
 const hoisted = vi.hoisted(() => ({
-  janModel: null as any,
-  metadataError: null as any,
-  fetchLatestJanModel: vi.fn(),
-  downloadStore: {
-    downloads: {} as Record<string, any>,
-    localDownloadingModels: new Set<string>(),
-    addLocalDownloadingModel: vi.fn(),
-  },
-  providersMock: {
-    getProviderByName: vi.fn(() => ({ models: [] })),
-    selectModelProvider: vi.fn(),
-    setProviders: vi.fn(),
-  },
-  pullModelWithMetadataMock: vi.fn(),
   startEngineSetupMock: vi.fn().mockResolvedValue(undefined),
   verifyGpuOffloadMock: vi.fn(),
   verifyEmbeddingModelMock: vi.fn(),
   getHardwareInfoMock: vi.fn(),
   navigateMock: vi.fn(),
   eventHandlers: {} as Record<string, any>,
-  huggingfaceToken: 'hf-token',
-  toastMock: {
-    success: vi.fn(),
-    error: vi.fn(),
-    warning: vi.fn(),
-    info: vi.fn(),
-    dismiss: vi.fn(),
-  },
-}))
-
-vi.mock('sonner', () => ({ toast: hoisted.toastMock }))
-
-vi.mock('@/hooks/useModelProvider', () => ({
-  useModelProvider: () => hoisted.providersMock,
-}))
-
-vi.mock('@/hooks/useDownloadStore', () => ({
-  useDownloadStore: () => hoisted.downloadStore,
 }))
 
 vi.mock('@/hooks/useServiceHub', () => {
   const stub = () => ({
     models: () => ({
-      isModelSupported: vi.fn().mockResolvedValue('GREEN'),
-      pullModelWithMetadata: hoisted.pullModelWithMetadataMock,
       startEngineSetup: hoisted.startEngineSetupMock,
       verifyGpuOffload: hoisted.verifyGpuOffloadMock,
       verifyEmbeddingModel: hoisted.verifyEmbeddingModelMock,
-    }),
-    providers: () => ({
-      getProviders: vi.fn().mockResolvedValue([]),
     }),
     hardware: () => ({ getHardwareInfo: hoisted.getHardwareInfoMock }),
   })
   return { useServiceHub: stub, getServiceHub: stub }
 })
-
-vi.mock('@/hooks/useLatestJanModel', () => ({
-  useLatestJanModel: () => ({
-    model: hoisted.janModel,
-    error: hoisted.metadataError,
-    fetchLatestJanModel: hoisted.fetchLatestJanModel,
-  }),
-}))
-
-vi.mock('@/hooks/useGeneralSetting', () => ({
-  useGeneralSetting: (selector: any) =>
-    selector({ huggingfaceToken: hoisted.huggingfaceToken }),
-}))
 
 vi.mock('@/i18n/react-i18next-compat', () => ({
   useTranslation: () => ({
@@ -96,21 +46,8 @@ vi.mock('@janhq/core', () => ({
   },
 }))
 
-vi.mock('@/constants/localStorage', () => ({
-  localStorageKey: {
-    modelSupportCache: 'msc',
-    setupCompleted: 'sc',
-    lastUsedModel: 'lum',
-  },
-  CACHE_EXPIRY_MS: 60000,
-}))
-
 vi.mock('@/constants/routes', () => ({
-  route: { home: '/', hub: { index: '/hub/' } },
-}))
-
-vi.mock('@/constants/models', () => ({
-  SETUP_SCREEN_QUANTIZATIONS: ['q4_k_m', 'q8_0'],
+  route: { settings: { providers: '/settings/providers/$providerName' } },
 }))
 
 vi.mock('@/containers/HeaderPage', () => ({
@@ -129,16 +66,6 @@ vi.mock('@/components/ui/button', () => ({
 }))
 
 import SetupScreen from '../SetupScreen'
-
-const sampleModel = {
-  model_name: 'jan-model',
-  display_name: 'Jan Model',
-  quants: [
-    { model_id: 'jan-q4_k_m', path: '/models/q4', file_size: '2 GB' },
-    { model_id: 'jan-q8_0', path: '/models/q8', file_size: '4 GB' },
-  ],
-  mmproj_models: [{ model_id: 'mmproj-f16', path: '/mmproj' }],
-}
 
 // The readiness probes resolve after mount, so flush them before asserting to
 // keep pending state updates out of the test.
@@ -182,11 +109,6 @@ const currentPage = () =>
 describe('SetupScreen', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    hoisted.janModel = sampleModel
-    hoisted.metadataError = null
-    hoisted.downloadStore.downloads = {}
-    hoisted.downloadStore.localDownloadingModels = new Set()
-    hoisted.providersMock.getProviderByName.mockReturnValue({ models: [] })
     hoisted.eventHandlers = {}
     // Healthy by default, so the wizard settles on the model page; individual
     // tests opt into a warning to hold an earlier page.
@@ -211,11 +133,6 @@ describe('SetupScreen', () => {
   it('renders the header page component', async () => {
     await renderStarted()
     expect(screen.getByTestId('header-page')).toBeInTheDocument()
-  })
-
-  it('calls fetchLatestJanModel on mount', async () => {
-    await renderStarted()
-    expect(hoisted.fetchLatestJanModel).toHaveBeenCalledWith(true)
   })
 
   it('runs the engine and embedding probes on mount', async () => {
@@ -273,11 +190,10 @@ describe('SetupScreen', () => {
       expect(hoisted.startEngineSetupMock).toHaveBeenCalledTimes(1)
     })
 
-    it('does not offer the model download yet', async () => {
+    it('does not offer the model import yet', async () => {
       await renderSetup()
 
-      expect(screen.queryByTestId('setup-model-card')).not.toBeInTheDocument()
-      expect(screen.queryByText('setup:download')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('setup-import-model')).not.toBeInTheDocument()
     })
   })
 
@@ -525,107 +441,36 @@ describe('SetupScreen', () => {
   })
 
   describe('model page', () => {
-    it('offers exactly one model card', async () => {
-      await renderPastSetup()
-      expect(screen.getAllByTestId('setup-model-card')).toHaveLength(1)
-    })
-
-    it('renders the card before the metadata lands', async () => {
-      hoisted.janModel = null
-
+    it('offers the import as its only action', async () => {
       await renderPastSetup()
 
-      expect(screen.getByTestId('setup-model-card')).toBeInTheDocument()
+      expect(screen.getByText('setup:importDescription')).toBeInTheDocument()
+      expect(screen.getByTestId('setup-import-model')).toHaveTextContent('setup:importModel')
+      expect(screen.getByTestId('setup-wizard').querySelectorAll('button')).toHaveLength(1)
     })
 
-    // The action belongs with the model it acts on.
-    it('puts the download action on the card', async () => {
+    // The page it opens blinks its Import button for `step: 'import_model'`.
+    it('opens the llama.cpp models page with the import step', async () => {
       await renderPastSetup()
+      fireEvent.click(screen.getByTestId('setup-import-model'))
 
-      expect(screen.getByTestId('setup-model-card')).toContainElement(
-        screen.getByText('setup:download')
-      )
+      expect(hoisted.navigateMock).toHaveBeenCalledWith({
+        to: '/settings/providers/$providerName',
+        params: { providerName: 'llamacpp' },
+        search: { step: 'import_model' },
+      })
     })
 
-    it('downloads from the card action', async () => {
+    // Importing a model makes the provider usable, and the index route then
+    // stops rendering this screen; nothing here decides setup is over.
+    it('stays put until the index route replaces the screen', async () => {
       await renderPastSetup()
-      fireEvent.click(screen.getByText('setup:download'))
-
-      await waitFor(() =>
-        expect(hoisted.pullModelWithMetadataMock).toHaveBeenCalledWith(
-          'jan-q4_k_m',
-          '/models/q4',
-          '/mmproj',
-          'hf-token',
-          true
-        )
-      )
-    })
-
-    // Matches the Hub: the button gives way to a progress bar rather than
-    // sitting there looking pressable.
-    it('replaces the action with progress while downloading', async () => {
-      hoisted.downloadStore.downloads = {
-        'jan-q4_k_m': {
-          name: 'jan-q4_k_m',
-          progress: 0.25,
-          current: 500_000_000,
-          total: 2_000_000_000,
-        },
-      }
-
-      await renderPastSetup()
-
-      expect(screen.queryByText('setup:download')).not.toBeInTheDocument()
-      expect(screen.getByText('25%')).toBeInTheDocument()
-    })
-
-    it('opens the Hub for further exploration', async () => {
-      await renderPastSetup()
-      fireEvent.click(screen.getByText('setup:exploreHub'))
-
-      expect(hoisted.navigateMock).toHaveBeenCalledWith({ to: '/hub/' })
-    })
-
-    it('queues the download until the metadata lands, keeping the HF token', async () => {
-      hoisted.janModel = null
-      const { rerender } = await renderPastSetup()
-
-      fireEvent.click(screen.getByText('setup:download'))
-      expect(hoisted.pullModelWithMetadataMock).not.toHaveBeenCalled()
-
-      hoisted.janModel = sampleModel
       await act(async () => {
-        rerender(<SetupScreen />)
+        await hoisted.eventHandlers['onModelImported']?.({ modelId: 'any-model' })
       })
 
-      await waitFor(() =>
-        expect(hoisted.pullModelWithMetadataMock).toHaveBeenCalledWith(
-          'jan-q4_k_m',
-          '/models/q4',
-          '/mmproj',
-          'hf-token',
-          true
-        )
-      )
-    })
-
-    it('shows an error toast when the queued download loses its metadata', async () => {
-      hoisted.janModel = null
-      const { rerender } = await renderPastSetup()
-      fireEvent.click(screen.getByText('setup:download'))
-
-      hoisted.metadataError = new Error('fail')
-      await act(async () => {
-        rerender(<SetupScreen />)
-      })
-
-      expect(hoisted.toastMock.error).toHaveBeenCalled()
-    })
-
-    it('does not start a download on its own', async () => {
-      await renderPastSetup()
-      expect(hoisted.pullModelWithMetadataMock).not.toHaveBeenCalled()
+      expect(currentPage()).toBe('model')
+      expect(hoisted.navigateMock).not.toHaveBeenCalled()
     })
   })
 
@@ -636,70 +481,6 @@ describe('SetupScreen', () => {
       expect(
         screen.getByTestId('setup-wizard').querySelectorAll('span.h-1').length
       ).toBe(3)
-    })
-  })
-
-  describe('leaving setup', () => {
-    it('completes once the model is imported', async () => {
-      hoisted.providersMock.selectModelProvider.mockReturnValue({
-        id: 'jan-q4_k_m',
-      })
-
-      await renderPastSetup()
-      await act(async () => {
-        await hoisted.eventHandlers['onModelImported']({
-          modelId: 'jan-q4_k_m',
-        })
-      })
-
-      await waitFor(() => expect(hoisted.navigateMock).toHaveBeenCalled())
-      expect(localStorage.getItem('sc')).toBe('true')
-    })
-
-    it('ignores an import of an unrelated model', async () => {
-      await renderPastSetup()
-      await act(async () => {
-        await hoisted.eventHandlers['onModelImported']({
-          modelId: 'some-other',
-        })
-      })
-
-      expect(hoisted.navigateMock).not.toHaveBeenCalled()
-    })
-
-    // A model already on disk leaves no import event to wait for.
-    it('completes without an import event when the model is already installed', async () => {
-      hoisted.providersMock.getProviderByName.mockReturnValue({
-        models: [{ id: 'jan-q4_k_m' }],
-      })
-
-      await renderPastSetup()
-
-      await waitFor(() => expect(hoisted.navigateMock).toHaveBeenCalled())
-      expect(hoisted.pullModelWithMetadataMock).not.toHaveBeenCalled()
-    })
-
-    // A warning was its own page and was passed deliberately, so it must not
-    // also block the exit.
-    it('completes after an acknowledged warning', async () => {
-      hoisted.verifyEmbeddingModelMock.mockResolvedValue({
-        status: 'warning',
-        modelId: 'sentence-transformer-mini',
-        problem: 'empty',
-      })
-
-      await renderStarted()
-      expect(currentPage()).toBe('setup')
-      await continueSetup()
-      expect(currentPage()).toBe('model')
-
-      await act(async () => {
-        await hoisted.eventHandlers['onModelImported']({
-          modelId: 'jan-q4_k_m',
-        })
-      })
-
-      await waitFor(() => expect(hoisted.navigateMock).toHaveBeenCalled())
     })
   })
 })
