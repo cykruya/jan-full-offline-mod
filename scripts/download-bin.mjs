@@ -17,6 +17,11 @@ const EMBEDDER_PATH = 'src-tauri/resources/models/sentence-transformer-mini.gguf
 
 const sha256 = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
 
+// The Visual C++ runtime the app and the engine link against. The Windows
+// installer carries it and installs it on a machine that has none.
+const VCREDIST_URL = 'https://aka.ms/vs/17/release/vc_redist.x64.exe'
+const VCREDIST_PATH = 'src-tauri/resources/vc_redist.x64.exe'
+
 function download(url, dest) {
   return new Promise((resolve, reject) => {
     console.log(`Downloading ${url} to ${dest}`)
@@ -424,6 +429,9 @@ async function main() {
     if (sha256(EMBEDDER_PATH) !== EMBEDDER_SHA256) throw new Error(`${EMBEDDER_PATH} does not match its pinned hash`)
   }
   console.log('Embedding model ready.')
+
+  // ----- Visual C++ runtime (required on Windows: the installer packs it) -----
+  if (platform === 'win32' && !fs.existsSync(VCREDIST_PATH)) await download(VCREDIST_URL, VCREDIST_PATH)
 
   console.log('Downloads completed.')
 }

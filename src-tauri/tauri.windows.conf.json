@@ -51,9 +51,12 @@
       "resources/bin/uv"
     ],
     "windows": {
+      "nsis": {
+        "installerHooks": "tauri.bundle.windows.hooks.nsh"
+      },
       "webviewInstallMode": {
         "silent": true,
-        "type": "downloadBootstrapper"
+        "type": "offlineInstaller"
       }
     }
   }
