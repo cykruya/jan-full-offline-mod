@@ -147,8 +147,8 @@ if (process.platform === 'win32') {
   mkdirSync(join(testHome, 'AppData', 'Local'), { recursive: true })
 }
 
-// Pre-seed the one-shot flag that turns off the fallback embedder download, so
-// a fresh profile never fetches a model over the network mid-spec.
+// Pre-seed the one-shot flag that marks the fallback embedder as installed, so
+// a fresh profile never tries to install it mid-spec.
 //
 // bootstrapDefaultEmbedder() (extensions/llamacpp-extension/src/index.ts) is a
 // startup install of `sentence-transformer-mini` that returns immediately when
@@ -158,47 +158,42 @@ if (process.platform === 'win32') {
 // `<jan_data_folder>/settings.json`. Writing the key here, before the app is
 // spawned, is indistinguishable from a previous run having done the bootstrap.
 //
-// Worth doing because the alternative is a ~45MB download to
-// `<jan_data_folder>/llamacpp/models/sentence-transformer-mini/model.gguf` on
-// every single run, and with it a "Download Complete" toast that mounts over
-// the header at a moment set by network speed rather than by the spec. That is
-// a coin flip landing on whatever is being clicked: it produced three
-// consecutive red runs where `add-provider-trigger` was reported "still not
-// clickable" while present, enabled and visible. Seeding removes the download
-// and the toast together; a seeded run leaves a ~112KB profile where an unseeded
-// one leaves ~45MB. It does not make the app offline -- it still makes small
-// metadata requests, the model catalogue among them -- but nothing in these
-// specs waits on one.
+// Worth doing because the install copies the model out of the app's bundled
+// resources, and an e2e build carries only an empty stub of it
+// (scripts/stub-tauri-resources.mjs): unseeded, every run would copy that stub
+// to `<jan_data_folder>/llamacpp/models/sentence-transformer-mini/model.gguf`
+// and fail to import it. A seeded run leaves a ~112KB profile.
 //
-// Not a workaround for a fragile download. A failed bootstrap is already
+// Not a workaround for a hard failure. A failed bootstrap is already
 // non-fatal -- the whole body is try/caught, logged as "will import on demand",
 // and retried next launch because the flag is only recorded on success -- and
 // nothing in these specs touches the embedder, which serves RAG rather than
-// chat. This is about determinism, not about avoiding a hard failure.
+// chat. This is about determinism.
 //
-// Set JAN_E2E_EMBEDDER_DOWNLOAD to skip the seeding and get the real bootstrap
-// back, which is what a spec *about* the embedder needs.
+// Set JAN_E2E_EMBEDDER_BOOTSTRAP to skip the seeding and get the real bootstrap
+// back, which is what a spec *about* the embedder needs, on a build that
+// carries the real model.
 //
 // Seeded whether or not this process created the profile. Gating it on
 // ownership would let an inherited JAN_E2E_HOME -- a stray export, a CI
-// variable, someone reusing a profile -- quietly take the download and the
-// toast back, with nothing in the log saying so, which is precisely the
-// nondeterminism this block exists to remove. Writing one key into a profile
+// variable, someone reusing a profile -- quietly take the bootstrap back, with
+// nothing in the log saying so, which is precisely the nondeterminism this
+// block exists to remove. Writing one key into a profile
 // we did not create is limited to a validated disposable temp profile; it is
 // the same key the product writes
 // itself after a successful bootstrap, it only adds to the file, and a caller
-// who wants the real download has the env var above.
+// who wants the real bootstrap has the env var above.
 //
 // NOTE this is the backend settings store, at janUserDataDir() -- NOT the app
 // config `settings.json` one directory up at janDataDir(), which is the file
 // smoke.e2e.ts asserts on. Same filename, different file, different owner.
-if (scenario !== 'migration' && !process.env.JAN_E2E_EMBEDDER_DOWNLOAD) {
+if (scenario !== 'migration' && !process.env.JAN_E2E_EMBEDDER_BOOTSTRAP) {
   const backendSettingsDir = janUserDataDir(testHome)
   const backendSettingsFile = join(backendSettingsDir, 'settings.json')
   // A fresh mkdtemp profile cannot have one yet, but an inherited profile can,
   // and a populated one at that -- so merge rather than clobber. An unparseable
   // file is left untouched, since losing whatever it holds is worse than the
-  // download this avoids.
+  // bootstrap this avoids.
   let settings: Record<string, string> | undefined = {}
   if (existsSync(backendSettingsFile)) {
     try {

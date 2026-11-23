@@ -60,7 +60,7 @@ model mid-conversation, markdown/LaTeX/code-block rendering, native image picker
 IME input, the token-speed readout.
 
 **Deliberately out of scope.** llama.cpp: a real local model means a
-multi-gigabyte download, minutes per run, and different behaviour on every
+multi-gigabyte model file, minutes per run, and different behaviour on every
 backend, so it needs its own platform-specific test rather than a place in the
 critical path. Copy-to-clipboard: `CopyButton` calls
 `navigator.clipboard.writeText` without awaiting it or handling a rejection, and
@@ -242,7 +242,7 @@ than `Jan` (including empty) are rejected too.
 This is an accidental-launch guard, **not a filesystem sandbox** or a proof of
 complete confinement. It does not prevent concurrent symlink changes, hard-link
 aliases, every possible legacy/plugin/config escape, Windows registry folder
-redirection, the macOS WebKit gap, or the Windows CLI/updater gaps below. Use a disposable OS account
+redirection, the macOS WebKit gap, or the Windows CLI gaps below. Use a disposable OS account
 or VM if stronger separation is needed. Existing profiles should be disposable;
 the harness merges a bootstrap seed into their backend settings.
 
@@ -319,16 +319,12 @@ in `isolation.ts` next to `XDG_RUNTIME_DIR`:
   subagent directory — therefore read the real user profile where `HOME`
   redirects them on macOS and Linux. The reachable desktop callers are reads, so
   this is a read leak rather than a destructive one.
-- `updater.json` is written through `tauri-plugin-store`, which resolves its
-  base with Tauri's own resolver rather than `core/app/paths.rs`, landing it in
-  the real `%APPDATA%\jan.ai.app\`. Created only when absent.
 
 These are known desktop-suite residue or reads, not a full isolation guarantee.
 Windows CLI/global-config callers and explicit saves are not covered; this
 harness does not fix their known-folder escapes. The one Windows escape that was destructive —
-deep-link registration, which rewrites the `HKCU` `jan://` handler to point at
-whichever binary is running — is compiled out under the `e2e` feature instead of
-being documented, since no environment variable reaches the registry.
+deep-link registration, which rewrote the `HKCU` `jan://` handler to point at
+whichever binary was running — is gone: the app no longer registers a URL scheme.
 
 Two things that look like they'd work but don't:
 
@@ -344,20 +340,17 @@ providers are configured, so `/` renders `SetupScreen`. The suite asserts that
 rather than working around it. Reusing an inherited profile can retain providers
 and other state, so it may not satisfy these first-launch assertions.
 
-A first launch used to **download**: Jan fetches its embedding model
-`sentence-transformer-mini` (~45MB) on a profile it has not bootstrapped before,
-and announces it with a toast that mounts over the header at a moment set by
-network speed. `wdio.conf.ts` now pre-seeds the one-shot flag that suppresses
-that bootstrap, so a run neither downloads it nor shows the toast — a kept
-profile is ~112KB rather than ~45MB. Set `JAN_E2E_EMBEDDER_DOWNLOAD=1` to get
-the real bootstrap back, which is what a spec *about* the embedder needs.
+A first launch **installs the embedding model**: on a profile it has not
+bootstrapped before, Jan copies `sentence-transformer-mini` (~45MB) out of its
+bundled resources and imports it. An e2e build carries only an empty stub of
+that resource (`scripts/stub-tauri-resources.mjs`), so the install could only
+fail. `wdio.conf.ts` pre-seeds the one-shot flag that marks the bootstrap done,
+so a run does not attempt it — a kept profile is ~112KB. Set
+`JAN_E2E_EMBEDDER_BOOTSTRAP=1` to get the real bootstrap back, which is what a
+spec *about* the embedder needs, on a build that carries the real model.
 
-That is the one large download removed, not every network call: the app still
-fetches small metadata such as the model catalogue, and no attempt has been made
-to verify the suite on a machine with no network at all. What it buys is
-determinism — the toast was landing on whatever a spec was clicking, and see
-[the analytics prompt section](#the-analytics-prompt-covers-the-composer) for
-what that cost.
+No attempt has been made to verify the suite on a machine with no network at
+all.
 
 ## Writing specs
 
@@ -434,9 +427,8 @@ Three consequences, all of which read as a failure about the wrong thing:
 **Do not use `waitForClickable()` in this suite.** WDIO's clickability check
 includes an `elementFromPoint` test; this driver's click does not.
 `click_element()` goes straight through anything painted on top, so the precheck
-can only ever reject clicks that would have succeeded — and on a first launch
-there is plenty painted on top (the analytics consent panel over the composer,
-the download toast over the header; both below). The failure mode is a 30-60s
+can only ever reject clicks that would have succeeded — and a toast can mount
+over the header at a moment no spec controls. The failure mode is a 30-60s
 timeout naming an element that is fine.
 
 Use `clickWhenReady(selector)` from `helpers/interactions.ts` instead:
@@ -468,40 +460,11 @@ different rules:
 The **assistant**-side row has no opacity rule at all — it is only `hidden`
 while that reply is streaming — so message actions on a reply need none of this.
 
-### The analytics prompt covers the composer
+### A click on a dialog trigger may not take
 
-Once a provider makes onboarding complete, `PromptAnalytic`
-(`web-app/src/containers/analytics/`) floats the consent panel at
-`fixed bottom-4 right-4 z-50` — directly over the chat composer's send button.
-The button stays present, enabled and non-zero-sized, so it fails only
-WebDriver's elementFromPoint check and reports as "still not clickable", which
-names an element that is fine.
-
-`denyAnalyticsConsent({ required })` in `helpers/provider.ts` answers it via
-`[data-testid="analytic-deny"]` — deny rather than allow, because a test run has
-no business opting into telemetry.
-
-`required` is the part worth reading twice. The panel appears **once per
-profile**, so exactly one spec in a run sees it: the first to complete
-onboarding, which is `specs/chat.e2e.ts`. That one passes `required: true`,
-because silently skipping a panel that has not appeared yet just defers it to
-whatever is being clicked later. Every later spec passes `required: false`,
-because waiting for a panel that has already been answered hangs for the full
-timeout.
-
-It is not the only thing that floats. The embedding-model download from
-[Isolation](#isolation) completes at a different moment every run depending on
-network speed, and when it lands a sonner toast (*Download Complete — Model
-"sentence-transformer-mini" downloaded and verified successfully*) mounts
-top-right, over the header of whatever page is open. Anything that depends on the
-header being unobstructed is therefore a coin flip. This produced three
-consecutive red runs, with `[data-testid="add-provider-trigger"]` reported as
-"still not clickable" while being present, enabled, visible and 132x32 — which is
-the `waitForClickable()` ban above, in the wild.
-
-A click that arrives in that window has also been seen to simply not take, and
-this is the suite's one **open** problem. Twice: once on an otherwise idle
-machine while the toast was landing, and once as a run of three consecutive red
+This is the suite's one **open** problem: a click on a dialog trigger has been
+seen to simply not take. Twice: once on an otherwise idle machine while a toast
+was landing over the header, and once as a run of three consecutive red
 runs — `[data-testid="add-provider-trigger"]` present and enabled, dialog never
 appearing, in `chat.e2e.ts` and `message-actions.e2e.ts` alike — which then went
 green on their own and have not returned.
@@ -566,8 +529,8 @@ If a future spec is mysteriously slow and the log carries
   above. They live here rather than in a spec because what they work around is
   the driver, not the screen.
 - `provider.ts` — `configureMockProvider()` walks the real Add Provider and Add
-  Model dialogs, `denyAnalyticsConsent()` answers the consent panel, and
-  `selectModel()` picks a model in the composer. The last is not optional:
+  Model dialogs, and `selectModel()` picks a model in the composer. The last is
+  not optional:
   `useModelProvider` defaults to `{ selectedProvider: 'llamacpp', selectedModel:
   null }` and `DropdownModelProvider`'s init effect only ever auto-selects a
   llamacpp model or clears the selection — it never reaches for a custom
@@ -645,14 +608,14 @@ Start the server in `before()` and close it in `after()` — an open listener ke
 the worker's event loop alive and the run never exits.
 
 What this deliberately does not cover is llama.cpp. A real local model means a
-multi-gigabyte download, minutes per run, and different behaviour on every
+multi-gigabyte model file, minutes per run, and different behaviour on every
 backend; it needs its own platform-specific test rather than a place in the
 critical-path suite.
 
-What the mock removes is the *LLM* download from the chat path, not every
-download. The app still fetches its `sentence-transformer-mini` embedding model
-on a profile that has not been bootstrapped, which the harness now seeds around
-— see [Isolation](#isolation).
+What the mock removes is the *LLM* from the chat path. The embedding model is a
+separate matter: the app installs `sentence-transformer-mini` from its bundled
+resources on a profile that has not been bootstrapped, which the harness seeds
+around — see [Isolation](#isolation).
 
 ### Spec order is maintained by hand
 
@@ -663,8 +626,7 @@ glob ran first and broke it.
 
 The order is pristine first, most-configured last — `smoke` → `chat` →
 `message-actions` → `image-limit` → `cowork-channel` — and it is the reason
-`message-actions.e2e.ts` can assume a provider has already been configured and
-the analytics panel already answered.
+`message-actions.e2e.ts` can assume a provider has already been configured.
 
 It leaks further than a shared profile would explain. The embedded provider
 spawns **one** app in the launcher's `onPrepare` and every spec file drives that
@@ -718,14 +680,14 @@ Both starts assert on disk: schema 5, exactly the fixture MCP config minus Exa
 (all other servers and settings unchanged), and all fixture thread IDs,
 metadata, message IDs and content preserved. Both navigate to historical thread
 `784952d3-dc72-474e-ab24-0d78e7035280` and assert its user and assistant text.
-There is no provider setup, model download or inference request. The embedder
-bootstrap suppression flag is seeded once; incidental app metadata requests
-are not blocked, so this is not an offline/network-isolation test.
+There is no provider setup, model import or inference request. The embedder
+bootstrap flag is seeded once. Network access is not blocked, so this is not an
+offline/network-isolation test.
 
 `JAN_E2E_SCENARIO` accepts only `default` (the existing five specs) or `migration`
 (only `migration.e2e.ts`); use the runner, not a hand-exported migration scenario.
 `test:migration` rejects inherited `JAN_E2E_HOME` and
-`JAN_E2E_EMBEDDER_DOWNLOAD`. It uses the same launch safety guard as the default
+`JAN_E2E_EMBEDDER_BOOTSTRAP`. It uses the same launch safety guard as the default
 suite. On failure/interruption the owned profile and phase-specific runner and
 WDIO logs remain under the printed temporary path. On success it removes them
 unless `JAN_E2E_KEEP=1`. The migration runner directly spawns and retains handles

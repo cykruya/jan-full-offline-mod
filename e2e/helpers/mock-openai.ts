@@ -10,7 +10,7 @@ import { AddressInfo } from 'node:net'
  * A minimal OpenAI-compatible server, so the chat spec can exercise the real
  * send/stream/persist loop without a real model.
  *
- * The alternative -- driving llamacpp -- means a multi-gigabyte download, minutes
+ * The alternative -- driving llamacpp -- means a multi-gigabyte model, minutes
  * per run, and a different backend on every architecture. This is deterministic,
  * takes milliseconds, and is byte-identical on macOS, Linux and both Windows
  * targets. It deliberately does NOT cover llamacpp; that needs its own

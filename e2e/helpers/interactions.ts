@@ -17,10 +17,9 @@ import { browser, $ } from '@wdio/globals'
  * `el.scrollIntoView(); el.click(); el.focus()` in JS
  * (tauri-plugin-wdio-webdriver, src/platform/executor.rs), which sails through
  * anything painted on top. So the precheck can only ever reject clicks that
- * would have worked, and on a first launch there is plenty painted on top --
- * an unseeded profile toasts "Download Complete" over the header. That does not
- * stop the click, but turns this into a 30s timeout naming an element that is
- * fine.
+ * would have worked, and a toast can mount over the header at any moment. That
+ * does not stop the click, but turns this into a 30s timeout naming an element
+ * that is fine.
  *
  * Displayed and enabled are still worth waiting for: those are real states this
  * app puts its controls in (Add Model stays disabled until the id field has
@@ -59,7 +58,7 @@ type OpenAttempt =
  * Click a dialog's trigger until the dialog is actually up.
  *
  * One click has been seen not to take. Twice now: once on an unloaded machine
- * in the window where the embedder-download toast was landing, and once as a
+ * in the window where a toast was landing over the header, and once as a
  * run of three consecutive red runs that went green again on their own. Both
  * times the trigger was present and enabled and the dialog never appeared.
  *

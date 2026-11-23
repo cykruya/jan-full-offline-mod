@@ -111,20 +111,9 @@ import { join } from 'node:path'
  *   Strictly weaker than the other two platforms, and an accepted gap rather
  *   than an oversight.
  *
- * One Windows write still lands outside `home` and no variable here can move it.
- * It is residue rather than damage, and it is listed so the next person does not
- * have to rediscover it: `updater.json`, via tauri-plugin-store. The frontend's
- * update check (web-app/src/services/updater/tauri.ts) stores a nonce seed
- * through the plugin, which resolves BaseDirectory::AppData with Tauri's own
- * resolver -- `dirs::data_dir()`, not core/app/paths.rs -- so it lands in the
- * real `%APPDATA%\jan.ai.app\`. It is created only when absent and never
- * overwrites an existing seed, so the worst case is planting a file the real app
- * would have written itself.
- *
- * The one Windows escape that *was* destructive is gone rather than documented:
- * deep-link registration writes HKCU Software\Classes\jan, outside anything an
- * environment variable can reach, so it is compiled out under the `e2e` feature
- * (src-tauri/src/lib.rs) alongside single-instance.
+ * The one Windows escape that *was* destructive is gone: deep-link registration
+ * wrote HKCU Software\Classes\jan, outside anything an environment variable can
+ * reach, and the app no longer registers a URL scheme.
  *
  * HOME is set on Windows as well. It moves nothing in `dirs`; it is there for
  * tooling that reads it directly, and setting it costs nothing.

@@ -15,7 +15,7 @@ const context = launchContext()
 assertSafeLaunchEnvironment(context)
 // Never accept a caller's profile: this runner alone owns seeding and deletion.
 if (process.env.JAN_E2E_HOME) throw new Error('Unset JAN_E2E_HOME: migration requires a fresh owned profile')
-if (process.env.JAN_E2E_EMBEDDER_DOWNLOAD) throw new Error('Unset JAN_E2E_EMBEDDER_DOWNLOAD for migration smoke')
+if (process.env.JAN_E2E_EMBEDDER_BOOTSTRAP) throw new Error('Unset JAN_E2E_EMBEDDER_BOOTSTRAP for migration smoke')
 const port = Number(process.env.TAURI_WEBDRIVER_PORT ?? 4445)
 if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid TAURI_WEBDRIVER_PORT')
 const home = assertSafeE2eHome(mkdtempSync(join(realpathSync(tmpdir()), 'jan-e2e-migration-')), context)
