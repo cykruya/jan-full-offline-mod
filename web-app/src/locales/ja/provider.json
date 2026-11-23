@@ -1,6 +1,5 @@
 {
   "addProvider": "プロバイダーを追加",
-  "addOpenAIProvider": "カスタムプロバイダーを追加",
   "enterNameForProvider": "プロバイダー名（例: my-llm-server）",
   "apiTypeLabel": "API形式",
   "apiTypeOpenAI": "OpenAI互換",

@@ -12,6 +12,16 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { ChevronDown } from 'lucide-react'
+import { predefinedProviders } from '@/constants/providers'
+import { getProviderTitle } from '@/lib/utils'
+import ProvidersAvatar from '@/containers/ProvidersAvatar'
 
 interface AddProviderDialogProps {
   onCreateProvider: (
@@ -31,6 +41,7 @@ export function AddProviderDialog({
 }: AddProviderDialogProps) {
   const { t } = useTranslation()
   const nameInputId = useId()
+  const [preset, setPreset] = useState<ProviderObject>()
   const [name, setName] = useState('')
   const [baseUrl, setBaseUrl] = useState('')
   const [apiKey, setApiKey] = useState('')
@@ -39,7 +50,16 @@ export function AddProviderDialog({
   const [isOpen, setIsOpen] = useState(false)
   const nameInputRef = useRef<HTMLInputElement>(null)
 
+  const selectPreset = (next?: ProviderObject) => {
+    setPreset(next)
+    setName(next?.provider ?? '')
+    setBaseUrl(next?.base_url ?? '')
+    setApiType(next?.api_type ?? 'openai')
+    setError(null)
+  }
+
   const reset = () => {
+    setPreset(undefined)
     setName('')
     setBaseUrl('')
     setApiKey('')
@@ -87,10 +107,43 @@ export function AddProviderDialog({
         }}
       >
         <DialogHeader>
-          <DialogTitle>{t('provider:addOpenAIProvider')}</DialogTitle>
+          <DialogTitle>{t('provider:addProvider')}</DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-col gap-3 mt-2">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-muted-foreground">
+              {t('provider:presetLabel')}
+            </label>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button data-testid="provider-preset-trigger" variant="outline" className="w-full justify-between rounded-md">
+                  {preset ? (
+                    <div className="flex min-w-0 items-center gap-2 leading-5">
+                      <ProvidersAvatar provider={preset} />
+                      <span className="min-w-0 truncate">{getProviderTitle(preset)}</span>
+                    </div>
+                  ) : (
+                    <span>{t('provider:presetCustom')}</span>
+                  )}
+                  <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-(--radix-dropdown-menu-trigger-width)">
+                <DropdownMenuItem onSelect={() => selectPreset()}>
+                  <span>{t('provider:presetCustom')}</span>
+                </DropdownMenuItem>
+                {(predefinedProviders as ProviderObject[]).map((p) => (
+                  <DropdownMenuItem key={p.provider} data-testid={`provider-preset-${p.provider}`} onSelect={() => selectPreset(p)}>
+                    <div className="flex min-w-0 items-center gap-2 leading-5">
+                      <ProvidersAvatar provider={p} />
+                      <span className="min-w-0 truncate">{getProviderTitle(p)}</span>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           <div className="flex flex-col gap-1">
             <label
               htmlFor={nameInputId}

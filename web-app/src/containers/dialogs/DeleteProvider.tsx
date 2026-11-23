@@ -18,7 +18,6 @@ import { useServiceHub } from '@/hooks/useServiceHub'
 import { useRouter } from '@tanstack/react-router'
 import { route } from '@/constants/routes'
 import { useTranslation } from '@/i18n/react-i18next-compat'
-import { predefinedProviders } from '@/constants/providers'
 import { useFavoriteModel } from '@/hooks/useFavoriteModel'
 
 type Props = {
@@ -30,12 +29,7 @@ const DeleteProvider = ({ provider }: Props) => {
   const { favoriteModels, removeFavorite } = useFavoriteModel()
   const serviceHub = useServiceHub()
   const router = useRouter()
-  if (
-    !provider ||
-    predefinedProviders.some((e) => e.provider === provider.provider) ||
-    EngineManager.instance().get(provider.provider)
-  )
-    return null
+  if (!provider || EngineManager.instance().get(provider.provider)) return null
 
   const removeProvider = async () => {
     // Remove favorite models that belong to this provider

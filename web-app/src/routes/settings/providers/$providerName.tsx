@@ -1373,6 +1373,14 @@ function ProviderDetail() {
                   </>
                 )}
               </Card>
+
+              {/* A provider added from a preset has no settings card above,
+                  which is where the others keep this. */}
+              {!extensionSource && isPredefinedProvider && (
+                <Card>
+                  <DeleteProvider provider={provider} />
+                </Card>
+              )}
             </div>
           </div>
         </div>

@@ -19,6 +19,7 @@ import {
   anthropicProviderSettings,
 } from '@/constants/providers'
 import cloneDeep from 'lodash/cloneDeep'
+import { getProviderPreset } from '@/lib/providerPresets'
 import { toast } from 'sonner'
 import { useServiceHub } from '@/hooks/useServiceHub'
 
@@ -56,7 +57,8 @@ function ModelProviders() {
         apiType === 'anthropic'
           ? anthropicProviderSettings
           : openAIProviderSettings
-      const settings = cloneDeep(template) as ProviderSetting[]
+      const preset = getProviderPreset(name)
+      const settings = (preset?.settings ?? cloneDeep(template)) as ProviderSetting[]
       for (const s of settings) {
         if (s.key === 'base-url') {
           (s.controller_props as { value: string }).value = baseUrl
@@ -65,9 +67,10 @@ function ModelProviders() {
         }
       }
       const newProvider: ProviderObject = {
+        ...preset,
         provider: name,
         active: true,
-        models: [],
+        models: preset?.models ?? [],
         settings,
         api_key: apiKey,
         base_url: baseUrl,

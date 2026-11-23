@@ -1,6 +1,7 @@
 {
   "addProvider": "添加提供商",
-  "addOpenAIProvider": "添加自定义提供商",
+  "presetLabel": "预设",
+  "presetCustom": "自定义",
   "enterNameForProvider": "提供商名称（例如“我的大模型服务”）",
   "apiTypeLabel": "API 格式",
   "apiTypeOpenAI": "OpenAI",

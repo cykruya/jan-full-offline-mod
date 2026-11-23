@@ -9,25 +9,6 @@ vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn(),
 }))
 
-vi.mock('@/constants/providers', () => ({
-  predefinedProviders: [
-    {
-      provider: 'openai',
-      active: false,
-      base_url: 'https://api.openai.com/v1',
-      models: [{ id: 'gpt-4', name: 'GPT-4' }],
-    },
-  ],
-}))
-
-vi.mock('@/constants/models', () => ({
-  providerModels: {
-    openai: {
-      models: ['gpt-4', 'gpt-3.5-turbo'],
-    },
-  },
-}))
-
 vi.mock('@janhq/core', () => ({
   EngineManager: {
     instance: vi.fn(),
@@ -54,10 +35,6 @@ vi.mock('@/lib/predefined', () => ({
       controller_props: { value: 4096 },
     },
   },
-}))
-
-vi.mock('@/lib/models', () => ({
-  getModelCapabilities: vi.fn().mockReturnValue([]),
 }))
 
 vi.mock('@/lib/provider-api-keys', () => ({
@@ -99,7 +76,7 @@ describe('TauriProvidersService', () => {
   })
 
   describe('getProviders', () => {
-    it('returns builtin + runtime providers on success', async () => {
+    it('returns only the runtime providers', async () => {
       const mockEngine = {
         list: vi.fn().mockResolvedValue([
           { id: 'local-model', name: 'Local', description: 'desc' },
@@ -113,11 +90,8 @@ describe('TauriProvidersService', () => {
       } as any)
 
       const result = await svc.getProviders()
-      expect(result.length).toBeGreaterThan(0)
-      // Runtime provider first, then builtins
-      const llama = result.find((p: any) => p.provider === 'llama.cpp')
-      expect(llama).toBeDefined()
-      expect(llama!.models).toHaveLength(1)
+      expect(result.map((p) => p.provider)).toEqual(['llama.cpp'])
+      expect(result[0].models).toHaveLength(1)
     })
 
     // MLX has no auto-fit, so an empty context would drop --ctx-size and leave

@@ -443,7 +443,8 @@ describe('ProviderDetail route', () => {
       renderComponent()
       expect(screen.getByTestId('header-page')).toBeInTheDocument()
       expect(screen.getByText('Title:openai')).toBeInTheDocument()
-      expect(screen.queryByTestId('delete-provider')).not.toBeInTheDocument()
+      // It was added from a preset, so it can be removed again.
+      expect(screen.getByTestId('delete-provider')).toHaveTextContent('openai')
       expect(screen.getByTestId('edit-gpt-4')).toBeInTheDocument()
       expect(screen.getByTestId('del-gpt-4')).toBeInTheDocument()
       expect(screen.getByTestId('add-model')).toBeInTheDocument()
