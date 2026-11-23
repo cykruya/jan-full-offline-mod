@@ -13,7 +13,6 @@ import { Route as SystemMonitorRouteImport } from './routes/system-monitor'
 import { Route as LogsRouteImport } from './routes/logs'
 import { Route as ArtifactsRouteImport } from './routes/artifacts'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as HubIndexRouteImport } from './routes/hub/index'
 import { Route as CoworkIndexRouteImport } from './routes/cowork/index'
 import { Route as ThreadsThreadIdRouteImport } from './routes/threads/$threadId'
 import { Route as SettingsWebSearchRouteImport } from './routes/settings/web-search'
@@ -30,7 +29,6 @@ import { Route as SettingsAttachmentsRouteImport } from './routes/settings/attac
 import { Route as SettingsAssistantRouteImport } from './routes/settings/assistant'
 import { Route as ProjectProjectIdRouteImport } from './routes/project/$projectId'
 import { Route as LocalApiServerLogsRouteImport } from './routes/local-api-server/logs'
-import { Route as HubModelIdRouteImport } from './routes/hub/$modelId'
 import { Route as CoworkSessionIdRouteImport } from './routes/cowork/$sessionId'
 import { Route as SettingsProvidersIndexRouteImport } from './routes/settings/providers/index'
 import { Route as SettingsExtensionsIndexRouteImport } from './routes/settings/extensions/index'
@@ -55,11 +53,6 @@ const ArtifactsRoute = ArtifactsRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HubIndexRoute = HubIndexRouteImport.update({
-  id: '/hub/',
-  path: '/hub/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoworkIndexRoute = CoworkIndexRouteImport.update({
@@ -142,11 +135,6 @@ const LocalApiServerLogsRoute = LocalApiServerLogsRouteImport.update({
   path: '/local-api-server/logs',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HubModelIdRoute = HubModelIdRouteImport.update({
-  id: '/hub/$modelId',
-  path: '/hub/$modelId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CoworkSessionIdRoute = CoworkSessionIdRouteImport.update({
   id: '/cowork/$sessionId',
   path: '/cowork/$sessionId',
@@ -181,7 +169,6 @@ export interface FileRoutesByFullPath {
   '/logs': typeof LogsRoute
   '/system-monitor': typeof SystemMonitorRoute
   '/cowork/$sessionId': typeof CoworkSessionIdRoute
-  '/hub/$modelId': typeof HubModelIdRoute
   '/local-api-server/logs': typeof LocalApiServerLogsRoute
   '/project/$projectId': typeof ProjectProjectIdRoute
   '/settings/assistant': typeof SettingsAssistantRoute
@@ -198,7 +185,6 @@ export interface FileRoutesByFullPath {
   '/settings/web-search': typeof SettingsWebSearchRoute
   '/threads/$threadId': typeof ThreadsThreadIdRoute
   '/cowork/': typeof CoworkIndexRoute
-  '/hub/': typeof HubIndexRoute
   '/settings/extensions/$extensionId': typeof SettingsExtensionsExtensionIdRoute
   '/settings/providers/$providerName': typeof SettingsProvidersProviderNameRoute
   '/settings/extensions/': typeof SettingsExtensionsIndexRoute
@@ -210,7 +196,6 @@ export interface FileRoutesByTo {
   '/logs': typeof LogsRoute
   '/system-monitor': typeof SystemMonitorRoute
   '/cowork/$sessionId': typeof CoworkSessionIdRoute
-  '/hub/$modelId': typeof HubModelIdRoute
   '/local-api-server/logs': typeof LocalApiServerLogsRoute
   '/project/$projectId': typeof ProjectProjectIdRoute
   '/settings/assistant': typeof SettingsAssistantRoute
@@ -227,7 +212,6 @@ export interface FileRoutesByTo {
   '/settings/web-search': typeof SettingsWebSearchRoute
   '/threads/$threadId': typeof ThreadsThreadIdRoute
   '/cowork': typeof CoworkIndexRoute
-  '/hub': typeof HubIndexRoute
   '/settings/extensions/$extensionId': typeof SettingsExtensionsExtensionIdRoute
   '/settings/providers/$providerName': typeof SettingsProvidersProviderNameRoute
   '/settings/extensions': typeof SettingsExtensionsIndexRoute
@@ -240,7 +224,6 @@ export interface FileRoutesById {
   '/logs': typeof LogsRoute
   '/system-monitor': typeof SystemMonitorRoute
   '/cowork/$sessionId': typeof CoworkSessionIdRoute
-  '/hub/$modelId': typeof HubModelIdRoute
   '/local-api-server/logs': typeof LocalApiServerLogsRoute
   '/project/$projectId': typeof ProjectProjectIdRoute
   '/settings/assistant': typeof SettingsAssistantRoute
@@ -257,7 +240,6 @@ export interface FileRoutesById {
   '/settings/web-search': typeof SettingsWebSearchRoute
   '/threads/$threadId': typeof ThreadsThreadIdRoute
   '/cowork/': typeof CoworkIndexRoute
-  '/hub/': typeof HubIndexRoute
   '/settings/extensions/$extensionId': typeof SettingsExtensionsExtensionIdRoute
   '/settings/providers/$providerName': typeof SettingsProvidersProviderNameRoute
   '/settings/extensions/': typeof SettingsExtensionsIndexRoute
@@ -271,7 +253,6 @@ export interface FileRouteTypes {
     | '/logs'
     | '/system-monitor'
     | '/cowork/$sessionId'
-    | '/hub/$modelId'
     | '/local-api-server/logs'
     | '/project/$projectId'
     | '/settings/assistant'
@@ -288,7 +269,6 @@ export interface FileRouteTypes {
     | '/settings/web-search'
     | '/threads/$threadId'
     | '/cowork/'
-    | '/hub/'
     | '/settings/extensions/$extensionId'
     | '/settings/providers/$providerName'
     | '/settings/extensions/'
@@ -300,7 +280,6 @@ export interface FileRouteTypes {
     | '/logs'
     | '/system-monitor'
     | '/cowork/$sessionId'
-    | '/hub/$modelId'
     | '/local-api-server/logs'
     | '/project/$projectId'
     | '/settings/assistant'
@@ -317,7 +296,6 @@ export interface FileRouteTypes {
     | '/settings/web-search'
     | '/threads/$threadId'
     | '/cowork'
-    | '/hub'
     | '/settings/extensions/$extensionId'
     | '/settings/providers/$providerName'
     | '/settings/extensions'
@@ -329,7 +307,6 @@ export interface FileRouteTypes {
     | '/logs'
     | '/system-monitor'
     | '/cowork/$sessionId'
-    | '/hub/$modelId'
     | '/local-api-server/logs'
     | '/project/$projectId'
     | '/settings/assistant'
@@ -346,7 +323,6 @@ export interface FileRouteTypes {
     | '/settings/web-search'
     | '/threads/$threadId'
     | '/cowork/'
-    | '/hub/'
     | '/settings/extensions/$extensionId'
     | '/settings/providers/$providerName'
     | '/settings/extensions/'
@@ -359,7 +335,6 @@ export interface RootRouteChildren {
   LogsRoute: typeof LogsRoute
   SystemMonitorRoute: typeof SystemMonitorRoute
   CoworkSessionIdRoute: typeof CoworkSessionIdRoute
-  HubModelIdRoute: typeof HubModelIdRoute
   LocalApiServerLogsRoute: typeof LocalApiServerLogsRoute
   ProjectProjectIdRoute: typeof ProjectProjectIdRoute
   SettingsAssistantRoute: typeof SettingsAssistantRoute
@@ -376,7 +351,6 @@ export interface RootRouteChildren {
   SettingsWebSearchRoute: typeof SettingsWebSearchRoute
   ThreadsThreadIdRoute: typeof ThreadsThreadIdRoute
   CoworkIndexRoute: typeof CoworkIndexRoute
-  HubIndexRoute: typeof HubIndexRoute
   SettingsExtensionsExtensionIdRoute: typeof SettingsExtensionsExtensionIdRoute
   SettingsProvidersProviderNameRoute: typeof SettingsProvidersProviderNameRoute
   SettingsExtensionsIndexRoute: typeof SettingsExtensionsIndexRoute
@@ -411,13 +385,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/hub/': {
-      id: '/hub/'
-      path: '/hub'
-      fullPath: '/hub/'
-      preLoaderRoute: typeof HubIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cowork/': {
@@ -532,13 +499,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LocalApiServerLogsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/hub/$modelId': {
-      id: '/hub/$modelId'
-      path: '/hub/$modelId'
-      fullPath: '/hub/$modelId'
-      preLoaderRoute: typeof HubModelIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/cowork/$sessionId': {
       id: '/cowork/$sessionId'
       path: '/cowork/$sessionId'
@@ -583,7 +543,6 @@ const rootRouteChildren: RootRouteChildren = {
   LogsRoute: LogsRoute,
   SystemMonitorRoute: SystemMonitorRoute,
   CoworkSessionIdRoute: CoworkSessionIdRoute,
-  HubModelIdRoute: HubModelIdRoute,
   LocalApiServerLogsRoute: LocalApiServerLogsRoute,
   ProjectProjectIdRoute: ProjectProjectIdRoute,
   SettingsAssistantRoute: SettingsAssistantRoute,
@@ -600,7 +559,6 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsWebSearchRoute: SettingsWebSearchRoute,
   ThreadsThreadIdRoute: ThreadsThreadIdRoute,
   CoworkIndexRoute: CoworkIndexRoute,
-  HubIndexRoute: HubIndexRoute,
   SettingsExtensionsExtensionIdRoute: SettingsExtensionsExtensionIdRoute,
   SettingsProvidersProviderNameRoute: SettingsProvidersProviderNameRoute,
   SettingsExtensionsIndexRoute: SettingsExtensionsIndexRoute,

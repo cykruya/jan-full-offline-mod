@@ -12,7 +12,6 @@
   "stop": "Hentikan",
   "start": "Mulai",
   "noModelFound": "Tidak ada model yang ditemukan",
-  "noModelFoundDesc": "Model yang tersedia akan dicantumkan di sini. Jika Anda belum memiliki model, kunjungi Hub untuk mengunduh.",
   "configuration": "Konfigurasi",
   "apiEndpoint": "Titik Akhir API",
   "testConnection": "Uji Koneksi",

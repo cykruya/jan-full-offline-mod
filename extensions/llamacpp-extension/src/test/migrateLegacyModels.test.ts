@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import llamacpp_extension from '../index'
-import { hostServices, newExtension } from './host'
+import { newExtension } from './host'
 
 vi.mock('../backend-settings')
 

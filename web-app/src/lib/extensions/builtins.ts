@@ -1,6 +1,5 @@
 import type { ExtensionModule, ValidatedManifest } from '@janhq/extension-api'
 import * as assistant from '../../../../extensions/assistant-extension/package.json'
-import * as download from '../../../../extensions/download-extension/package.json'
 import * as llamacpp from '../../../../extensions/llamacpp-extension/package.json'
 import * as mlx from '../../../../extensions/mlx-extension/package.json'
 import * as vectorDb from '../../../../extensions/vector-db-extension/package.json'
@@ -50,20 +49,10 @@ export const HOST_BUILTINS: BuiltinExtension[] = [
   },
   {
     manifest: manifestOf({
-      name: download.name,
-      version: download.version,
-      jan: download.jan,
-    }),
-    load: () => import('@janhq/download-extension'),
-  },
-  {
-    manifest: manifestOf({
       name: llamacpp.name,
       version: llamacpp.version,
       jan: llamacpp.jan,
     }),
-    // No dependsOn download: the engines look the Downloads service up per
-    // download, so a failed download built-in must not take inference down.
     load: () => import('@janhq/llamacpp-extension'),
   },
   {

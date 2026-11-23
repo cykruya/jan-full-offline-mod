@@ -237,9 +237,7 @@
     "reportIssue": "報告問題",
     "credits": "致謝",
     "creditsDesc1": "Jan 由 Menlo 團隊用 ❤️ 構建。",
-    "creditsDesc2": "特別感謝我們的開源依賴項——尤其是 llama.cpp 和 Tauri——以及我們出色的 AI 社群。",
-    "huggingfaceToken": "HuggingFace 代幣",
-    "huggingfaceTokenDesc": "您的 HuggingFace API 代幣，用於存取模型。"
+    "creditsDesc2": "特別感謝我們的開源依賴項——尤其是 llama.cpp 和 Tauri——以及我們出色的 AI 社群。"
   },
   "extensions": {
     "title": "擴充功能"

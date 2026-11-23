@@ -19,9 +19,6 @@ vi.mock('@/stores/titlebar-layout-store', () => ({
   useTitlebarLayout: (selector: (s: unknown) => unknown) =>
     selector({ layout: { left: [], right: [] } }),
 }))
-vi.mock('@/containers/DownloadManegement', () => ({
-  DownloadManagement: () => <div data-testid="downloads" />,
-}))
 vi.mock('../NavCoworkTools', () => ({ NavCoworkTools: () => null }))
 vi.mock('../NavHistory', () => ({ NavHistory: () => null }))
 vi.mock('../NavMain', () => ({ NavMain: () => null }))
@@ -121,15 +118,4 @@ it('keeps the overlay open while the page does not change', () => {
   fireEvent.click(screen.getAllByRole('button', { name: 'common:sidebar.toggle' }).at(-1)!)
   act(() => view.rerender(tree()))
   expect(screen.getByRole('dialog')).toBeInTheDocument()
-})
-
-it('leaves the download indicator to the page header on mobile but keeps it in the docked sidebar', () => {
-  const mobile = render(tree())
-  fireEvent.click(screen.getAllByRole('button', { name: 'common:sidebar.toggle' }).at(-1)!)
-  expect(screen.queryByTestId('downloads')).not.toBeInTheDocument()
-  mobile.unmount()
-
-  env.mobile = false
-  render(tree())
-  expect(screen.getByTestId('downloads')).toBeInTheDocument()
 })

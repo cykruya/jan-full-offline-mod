@@ -12,7 +12,6 @@
   "stop": "Parar",
   "start": "Iniciar",
   "noModelFound": "Nenhum modelo encontrado",
-  "noModelFoundDesc": "Modelos disponíveis serão listados aqui. Se você ainda não tem modelos, visite o Hub para baixar.",
   "configuration": "Configuração",
   "apiEndpoint": "Endpoint da API",
   "testConnection": "Testar Conexão",

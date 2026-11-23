@@ -8,7 +8,6 @@ vi.mock('@/hooks/useLeftPanel', () => ({ useLeftPanel: () => ({ open: state.open
 vi.mock('@/stores/titlebar-layout-store', () => ({
   useTitlebarLayout: (selector: (s: unknown) => unknown) => selector({ layout: { left: state.left, right: state.right } }),
 }))
-vi.mock('@/containers/DownloadManegement', () => ({ DownloadManagement: () => null }))
 
 beforeEach(() => { state.open = true; state.left = []; state.right = ['minimize', 'maximize', 'close']; vi.stubGlobal('IS_MACOS', false) })
 afterEach(() => { cleanup(); vi.unstubAllGlobals() })

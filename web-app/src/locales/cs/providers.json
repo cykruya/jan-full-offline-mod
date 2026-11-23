@@ -12,7 +12,6 @@
   "stop": "Zastavit",
   "start": "Spustit",
   "noModelFound": "Nebyl nalezen žádný model",
-  "noModelFoundDesc": "Dostupné modely budou uvedeny zde. Pokud zatím nemáte žádné modely, navštivte Centrum a stáhněte si je.",
   "configuration": "Konfigurace",
   "apiEndpoint": "API koncový bod",
   "testConnection": "Otestovat připojení",

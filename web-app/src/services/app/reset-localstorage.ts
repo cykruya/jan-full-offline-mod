@@ -25,25 +25,15 @@ export function pruneLocalStorageByFlags(flags: WebdataResetFlags): void {
   if (!flags.keepModelsAndConfigs) {
     remove([
       k.modelProvider,
-      k.modelSources,
       k.lastUsedModel,
       k.lastUsedAssistant,
       k.defaultAssistantId,
       k.favoriteModels,
-      k.latestJanModel,
       k.defaultEmbeddingModel,
-      k.modelSupportCache,
-      k.janModelPromptDismissed,
-      k.pausedDownloads,
     ])
   }
 
   if (!flags.keepAppData) {
     remove([k.threads, k.messages, k.threadManagement, k.recentSearches])
-  }
-
-  // A full wipe should land back on first-run onboarding.
-  if (!flags.keepAppData && !flags.keepModelsAndConfigs) {
-    remove([k.setupCompleted])
   }
 }

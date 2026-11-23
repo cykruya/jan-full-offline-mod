@@ -25,9 +25,6 @@ vi.mock('@/stores/titlebar-layout-store', () => ({
     selector: (state: { layout: { left: string[]; right: string[] } }) => unknown
   ) => selector({ layout: { left: titlebar.left, right: [] } }),
 }))
-vi.mock('@/containers/DownloadManegement', () => ({
-  DownloadManagement: () => null,
-}))
 vi.mock('../NavCoworkTools', () => ({ NavCoworkTools: () => null }))
 vi.mock('../NavHistory', () => ({ NavHistory: () => null }))
 vi.mock('../NavMain', () => ({ NavMain: () => null }))

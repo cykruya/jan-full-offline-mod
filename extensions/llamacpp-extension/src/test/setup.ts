@@ -58,7 +58,6 @@ vi.mock('@tauri-apps/api/core', () => ({
 // Mock @janhq/core
 vi.mock('@janhq/core', () => ({
   ServiceKeys: {
-    Downloads: { id: 'downloads' },
     Llamacpp: { id: 'llamacpp' },
   },
   logger: {
@@ -92,11 +91,6 @@ vi.mock('@janhq/core', () => ({
   AppEvent: {
     onModelImported: 'onModelImported',
     onBackendVerificationFailed: 'onBackendVerificationFailed',
-  },
-  DownloadEvent: {
-    onFileDownloadUpdate: 'onFileDownloadUpdate',
-    onFileDownloadStopped: 'onFileDownloadStopped',
-    onModelValidationFailed: 'onModelValidationFailed',
   },
   AIEngine: class {},
 }))

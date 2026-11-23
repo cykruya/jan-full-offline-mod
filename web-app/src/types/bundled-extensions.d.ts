@@ -3,11 +3,6 @@ declare module '@janhq/assistant-extension' {
     ctx: import('@janhq/core').InternalExtensionContext
   ): Promise<void>
 }
-declare module '@janhq/download-extension' {
-  export function activate(
-    ctx: import('@janhq/core').InternalExtensionContext
-  ): Promise<void>
-}
 declare module '@janhq/llamacpp-extension' {
   export function activate(
     ctx: import('@janhq/core').InternalExtensionContext

@@ -24,7 +24,6 @@ import { DefaultOpenerService } from './opener/default'
 import { DefaultUpdaterService } from './updater/default'
 import { DefaultPathService } from './path/default'
 import { DefaultCoreService } from './core/default'
-import { DefaultDeepLinkService } from './deeplink/default'
 import { DefaultProjectsService } from './projects/default'
 import { DefaultRAGService } from './rag/default'
 import type { RAGService } from './rag/types'
@@ -50,7 +49,6 @@ import type { OpenerService } from './opener/types'
 import type { UpdaterService } from './updater/types'
 import type { PathService } from './path/types'
 import type { CoreService } from './core/types'
-import type { DeepLinkService } from './deeplink/types'
 import type { ProjectsService } from './projects/types'
 
 export interface ServiceHub {
@@ -71,7 +69,6 @@ export interface ServiceHub {
   updater(): UpdaterService
   path(): PathService
   core(): CoreService
-  deeplink(): DeepLinkService
   projects(): ProjectsService
   rag(): RAGService
   uploads(): UploadsService
@@ -95,7 +92,6 @@ class PlatformServiceHub implements ServiceHub {
   private updaterService: UpdaterService = new DefaultUpdaterService()
   private pathService: PathService = new DefaultPathService()
   private coreService: CoreService = new DefaultCoreService()
-  private deepLinkService: DeepLinkService = new DefaultDeepLinkService()
   private projectsService: ProjectsService = new DefaultProjectsService()
   private ragService: RAGService = new DefaultRAGService()
   private uploadsService: UploadsService = new DefaultUploadsService()
@@ -132,7 +128,6 @@ class PlatformServiceHub implements ServiceHub {
           updaterModule,
           pathModule,
           coreModule,
-          deepLinkModule,
           extensionsModule,
         ] = await Promise.all([
           import('./theme/tauri'),
@@ -147,7 +142,6 @@ class PlatformServiceHub implements ServiceHub {
           import('./updater/tauri'),
           import('./path/tauri'),
           import('./core/tauri'),
-          import('./deeplink/tauri'),
           import('./extensions/tauri'),
         ])
 
@@ -163,7 +157,6 @@ class PlatformServiceHub implements ServiceHub {
         this.updaterService = new updaterModule.TauriUpdaterService()
         this.pathService = new pathModule.TauriPathService()
         this.coreService = new coreModule.TauriCoreService()
-        this.deepLinkService = new deepLinkModule.TauriDeepLinkService()
         this.extensionsService = new extensionsModule.TauriExtensionsService()
       } else if (isPlatformIOS() || isPlatformAndroid()) {
         const [
@@ -177,7 +170,6 @@ class PlatformServiceHub implements ServiceHub {
           openerModule,
           pathModule,
           coreModule,
-          deepLinkModule,
         ] = await Promise.all([
           import('./theme/tauri'),
           import('./window/tauri'),
@@ -189,7 +181,6 @@ class PlatformServiceHub implements ServiceHub {
           import('./opener/tauri'),
           import('./path/tauri'),
           import('./core/tauri'),
-          import('./deeplink/tauri'),
         ])
 
         this.themeService = new themeModule.TauriThemeService()
@@ -202,7 +193,6 @@ class PlatformServiceHub implements ServiceHub {
         this.openerService = new openerModule.TauriOpenerService()
         this.pathService = new pathModule.TauriPathService()
         this.coreService = new coreModule.TauriCoreService()
-        this.deepLinkService = new deepLinkModule.TauriDeepLinkService()
       }
 
       this.initialized = true
@@ -301,11 +291,6 @@ class PlatformServiceHub implements ServiceHub {
   core(): CoreService {
     this.ensureInitialized()
     return this.coreService
-  }
-
-  deeplink(): DeepLinkService {
-    this.ensureInitialized()
-    return this.deepLinkService
   }
 
   projects(): ProjectsService {

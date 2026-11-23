@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { AppEvent, DownloadEvent, events } from '@janhq/core'
+import { AppEvent, events } from '@janhq/core'
 import { getServiceHub } from '@/hooks/useServiceHub'
 import { activeSetupScenario } from '@/lib/setupSimulation'
 import {
@@ -356,20 +356,15 @@ export function useSetupChecklist(options?: { enabled?: boolean }) {
         void rerun()
       }
     }
-    const onDownloadSuccess = (payload?: { downloadType?: string }) => {
-      if (payload?.downloadType === 'Engine') void rerun()
-    }
     const onModelImported = (payload?: { embedding?: boolean }) => {
       if (payload?.embedding) void rerun()
     }
 
     events.on(ENGINE_SETTINGS_CHANGED, onEngineSettingChanged)
-    events.on(DownloadEvent.onFileDownloadSuccess, onDownloadSuccess)
     events.on(AppEvent.onModelImported, onModelImported)
 
     return () => {
       events.off(ENGINE_SETTINGS_CHANGED, onEngineSettingChanged)
-      events.off(DownloadEvent.onFileDownloadSuccess, onDownloadSuccess)
       events.off(AppEvent.onModelImported, onModelImported)
     }
   }, [enabled, rerun])

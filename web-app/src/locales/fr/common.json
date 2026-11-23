@@ -22,7 +22,6 @@
   "chats": "Discussions",
   "favorites": "Favoris",
   "recents": "Récents",
-  "hub": "Concentrateur Hub",
   "helpSupport": "Aide & Support",
   "unstarAll": "Enlever toutes les étoiles",
   "unstar": "Désélectionner",
@@ -73,12 +72,7 @@
   "noResultsFound": "Aucun résultat trouvé",
   "noThreadsYet": "Aucune discussion pour le moment",
   "noThreadsYetDesc": "Commencez une nouvelle conversation pour voir l'historique de vos discussions ici.",
-  "downloads": "Téléchargements",
-  "downloading": "Téléchargement en cours",
   "uploadingAttachments": "Téléversement des pièces jointes…",
-  "cancelDownload": "Annuler le téléchargement",
-  "downloadCancelled": "Téléchargement annulé",
-  "downloadComplete": "Téléchargement terminé",
   "thinking": "Réflexion...",
   "thought": "Pensée",
   "callingTool": "Appel de l'outil",
@@ -343,30 +337,6 @@
     "appUpdateDownloadFailed": {
       "title": "Échec du téléchargement de la mise à jour de l'application",
       "description": "Échec du téléchargement de la mise à jour de l'application. Veuillez réessayer."
-    },
-    "downloadComplete": {
-      "title": "Téléchargement terminé",
-      "description": "{{item}} a été téléchargé"
-    },
-    "downloadCancelled": {
-      "title": "Téléchargement annulé",
-      "description": "Le processus de téléchargement a été annulé"
-    },
-    "downloadFailed": {
-      "title": "Échec du téléchargement",
-      "description": "Le téléchargement de {{item}} a échoué"
-    },
-    "modelValidationStarted": {
-      "title": "Validation du modèle",
-      "description": "Modèle \"{{modelId}}\" téléchargé avec succès. Vérification de l'intégrité..."
-    },
-    "modelValidationFailed": {
-      "title": "Échec de la validation du modèle",
-      "description": "Le modèle téléchargé \"{{modelId}}\" a échoué à la vérification d'intégrité et a été supprimé. Le fichier peut être corrompu ou altéré."
-    },
-    "downloadAndVerificationComplete": {
-      "title": "Téléchargement terminé",
-      "description": "Le modèle \"{{item}}\" a été téléchargé et vérifié avec succès"
     },
     "projectCreated": {
       "title": "Projet créé",

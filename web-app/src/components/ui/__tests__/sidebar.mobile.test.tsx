@@ -11,7 +11,6 @@ vi.mock('@/i18n/react-i18next-compat', () => ({
 vi.mock('@/hooks/useLeftPanel', () => ({
   useLeftPanel: () => ({ open: true, setLeftPanel: vi.fn() }),
 }))
-vi.mock('@/containers/DownloadManegement', () => ({ DownloadManagement: () => null }))
 
 import {
   Sidebar,

@@ -225,22 +225,11 @@ export type SpecDraftKind = 'mtp' | 'eagle3' | 'dflash' | 'dspark'
 export interface ImportOptions {
   modelPath: string
   mmprojPath?: string
-  modelSha256?: string
-  modelSize?: number
-  mmprojSha256?: string
-  mmprojSize?: number
-  // Optional speculative-decoding draft gguf downloaded alongside the model,
-  // plus which flavour the catalog named it as. The kind is a hint only: the
+  // Optional speculative-decoding draft gguf imported alongside the model,
+  // plus which flavour the caller takes it for. The kind is a hint only: the
   // draft's own `general.architecture` decides, since it is authoritative.
   specDraftPath?: string
   specDraftKind?: SpecDraftKind
-  // Additional files to download for MLX models
-  files?: Array<{
-    url: string
-    filename: string
-    sha256?: string
-    size?: number
-  }>
 }
 
 export interface importResult {
@@ -389,15 +378,6 @@ export abstract class AIEngine {
    * Imports a model
    */
   abstract import(modelId: string, opts: ImportOptions): Promise<void>
-
-  /**
-   * Aborts an ongoing model import
-   */
-  abstract abortImport(modelId: string): Promise<void>
-
-  // Stops an import but keeps the partial download so it can be resumed.
-  // Default no-op for engines without resumable downloads.
-  async pauseImport(_modelId: string): Promise<void> {}
 
   /**
    * Get currently loaded models

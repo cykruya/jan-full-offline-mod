@@ -29,7 +29,6 @@
   "openclawAgent": "Agente OpenClaw",
   "favorites": "Favoritos",
   "recents": "Recientes",
-  "hub": "Hub",
   "helpSupport": "Ayuda y soporte",
   "unstarAll": "Quitar todas las estrellas",
   "unstar": "Quitar estrella",
@@ -85,12 +84,7 @@
   "noResultsFound": "No se encontraron resultados",
   "noThreadsYet": "Aún no hay hilos",
   "noThreadsYetDesc": "Inicia una nueva conversación para ver tu historial de hilos aquí.",
-  "downloads": "Descargas",
-  "downloading": "Descargando",
   "uploadingAttachments": "Subiendo archivos adjuntos…",
-  "cancelDownload": "Cancelar descarga",
-  "downloadCancelled": "Descarga cancelada",
-  "downloadComplete": "Descarga completa",
   "thinking": "Pensando...",
   "thought": "Pensamiento",
   "callingTool": "Llamando herramienta",
@@ -383,30 +377,6 @@
     "appUpdateDownloadFailed": {
       "title": "Error en la descarga de actualización",
       "description": "Error al descargar la actualización. Por favor, inténtalo de nuevo."
-    },
-    "downloadComplete": {
-      "title": "Descarga completa",
-      "description": "{{item}} se ha descargado"
-    },
-    "downloadCancelled": {
-      "title": "Descarga cancelada",
-      "description": "El proceso de descarga fue cancelado"
-    },
-    "downloadFailed": {
-      "title": "Error en la descarga",
-      "description": "La descarga de {{item}} falló"
-    },
-    "modelValidationStarted": {
-      "title": "Validando modelo",
-      "description": "Modelo \"{{modelId}}\" descargado correctamente. Verificando integridad..."
-    },
-    "modelValidationFailed": {
-      "title": "Validación del modelo fallida",
-      "description": "El modelo descargado \"{{modelId}}\" no pasó la verificación de integridad y fue eliminado. El archivo puede estar corrupto o manipulado."
-    },
-    "downloadAndVerificationComplete": {
-      "title": "Descarga completa",
-      "description": "Modelo \"{{item}}\" descargado y verificado correctamente"
     },
     "projectCreated": {
       "title": "Proyecto creado",

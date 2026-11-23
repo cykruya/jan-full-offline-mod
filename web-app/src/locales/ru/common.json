@@ -22,7 +22,6 @@
   "chats": "Чаты",
   "favorites": "Избранное",
   "recents": "Недавние",
-  "hub": "Хаб",
   "helpSupport": "Справка и поддержка",
   "unstarAll": "Очистить избранное",
   "unstar": "Удалить из избранного",
@@ -73,12 +72,7 @@
   "noResultsFound": "Результаты не найдены",
   "noThreadsYet": "Обсуждений пока нет",
   "noThreadsYetDesc": "Начните новый диалог, чтобы увидеть историю ваших обсуждений.",
-  "downloads": "Загрузки",
-  "downloading": "Загрузка",
   "uploadingAttachments": "Загрузка вложений…",
-  "cancelDownload": "Отменить загрузку",
-  "downloadCancelled": "Загрузка отменена",
-  "downloadComplete": "Загрузка завершена",
   "thinking": "Размышление...",
   "thought": "Размышление",
   "callingTool": "Вызов инструмента",
@@ -354,30 +348,6 @@
     "appUpdateDownloadFailed": {
       "title": "Ошибка загрузки обновления приложения",
       "description": "Не удалось загрузить обновление приложения. Пожалуйста, попробуйте ещё раз."
-    },
-    "downloadComplete": {
-      "title": "Загрузка завершена",
-      "description": "Загружено: {{item}}"
-    },
-    "downloadCancelled": {
-      "title": "Загрузка отменена",
-      "description": "Процесс загрузки был отменен."
-    },
-    "downloadFailed": {
-      "title": "Ошибка загрузки",
-      "description": "Не удалось загрузить {{item}}"
-    },
-    "modelValidationStarted": {
-      "title": "Проверка модели",
-      "description": "Модель \"{{modelId}}\" успешно загружена. Проверка целостности…"
-    },
-    "modelValidationFailed": {
-      "title": "Проверка модели не пройдена",
-      "description": "Загруженная модель \"{{modelId}}\" не прошла проверку целостности и была удалена. Файл может быть повреждён или изменён."
-    },
-    "downloadAndVerificationComplete": {
-      "title": "Загрузка завершена",
-      "description": "Модель \"{{item}}\" успешно загружена и проверена."
     },
     "projectCreated": {
       "title": "Проект создан",

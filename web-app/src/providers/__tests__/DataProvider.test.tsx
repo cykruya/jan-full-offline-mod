@@ -24,7 +24,6 @@ const h = vi.hoisted(() => {
     setLastServerModels: vi.fn(),
     setServerPort: vi.fn(),
     setServerStatus: vi.fn(),
-    navigate: vi.fn(),
     invoke: vi.fn().mockResolvedValue(undefined),
     isDev: vi.fn().mockReturnValue(false),
     providerHasRemoteApiKeys: vi.fn().mockReturnValue(true),
@@ -117,10 +116,6 @@ vi.mock('@/hooks/useAppState', () => ({
     sel({ setServerStatus: h.setServerStatus }),
 }))
 
-vi.mock('@tanstack/react-router', () => ({
-  useNavigate: () => h.navigate,
-}))
-
 vi.mock('@/lib/utils', () => ({
   isDev: () => h.isDev(),
 }))
@@ -135,7 +130,6 @@ vi.mock('@tauri-apps/api/core', () => ({
 }))
 
 vi.mock('@janhq/core', () => ({
-  HUGGINGFACE_TOKEN_SECRET_KEY: 'huggingface',
   AppEvent: { onModelImported: 'onModelImported' },
   events: {
     on: (...a: unknown[]) => h.eventsOn(...a),
@@ -143,19 +137,9 @@ vi.mock('@janhq/core', () => ({
   },
 }))
 
-vi.mock('@/types/events', () => ({
-  SystemEvent: { DEEP_LINK: 'deep-link' },
-}))
-
-vi.mock('@/constants/routes', () => ({
-  route: { hub: { model: '/hub/model' } },
-}))
-
 // Override serviceHub per-test needs. We extend the global setup's mock.
 const hubState = vi.hoisted(() => ({
   unsubscribe: vi.fn(),
-  deeplinkGetCurrent: vi.fn().mockResolvedValue(null),
-  deeplinkOnOpenUrl: vi.fn().mockResolvedValue(vi.fn()),
   eventsListen: vi.fn(),
   getProviders: vi.fn().mockResolvedValue([]),
   getMCPConfig: vi.fn().mockResolvedValue({ mcpServers: { a: 1 }, mcpSettings: { s: 1 } }),
@@ -175,10 +159,6 @@ vi.mock('@/hooks/useServiceHub', () => {
     mcp: () => ({ getMCPConfig: hubState.getMCPConfig }),
     assistants: () => ({ getAssistants: hubState.getAssistants }),
     threads: () => ({ fetchThreads: hubState.fetchThreads }),
-    deeplink: () => ({
-      getCurrent: hubState.deeplinkGetCurrent,
-      onOpenUrl: hubState.deeplinkOnOpenUrl,
-    }),
     events: () => ({
       listen: (...args: unknown[]) => {
         hubState.eventsListen(...args)
@@ -215,8 +195,6 @@ const resetHubState = () => {
   hubState.getActiveModels.mockResolvedValue([])
   hubState.startServer.mockResolvedValue(1337)
   hubState.startModel.mockResolvedValue(undefined)
-  hubState.deeplinkGetCurrent.mockResolvedValue(null)
-  hubState.deeplinkOnOpenUrl.mockResolvedValue(vi.fn())
 }
 
 describe('DataProvider', () => {
@@ -393,19 +371,6 @@ describe('DataProvider', () => {
       )
     })
     warn.mockRestore()
-  })
-
-  it('subscribes to deep link system events and cleans up on unmount', async () => {
-    const { unmount } = render(<DataProvider />)
-    await waitFor(() => {
-      expect(hubState.eventsListen).toHaveBeenCalledWith('deep-link', expect.any(Function))
-    })
-    // Let the listen().then(unsub => unsubscribe = unsub) resolve
-    await act(async () => {
-      await Promise.resolve()
-    })
-    unmount()
-    expect(hubState.unsubscribe).toHaveBeenCalled()
   })
 
   it('registers remote providers with the backend for active providers', async () => {
@@ -587,35 +552,5 @@ describe('DataProvider', () => {
     })
     expect(h.setServerStatus).not.toHaveBeenCalled()
     err.mockRestore()
-  })
-
-  it('navigates to hub model route when handling a valid deep link', async () => {
-    const deeplinkUrl = 'jan://host/action/owner/repo'
-    hubState.deeplinkGetCurrent.mockResolvedValue([deeplinkUrl])
-    render(<DataProvider />)
-    await waitFor(() => {
-      expect(h.navigate).toHaveBeenCalledWith({
-        to: '/hub/model',
-        search: { repo: 'owner/repo' },
-      })
-    })
-  })
-
-  it('ignores deep links with insufficient path segments', async () => {
-    hubState.deeplinkGetCurrent.mockResolvedValue(['jan://only'])
-    render(<DataProvider />)
-    await act(async () => {
-      await Promise.resolve()
-    })
-    expect(h.navigate).not.toHaveBeenCalled()
-  })
-
-  it('ignores null deep link payload', async () => {
-    hubState.deeplinkGetCurrent.mockResolvedValue(null)
-    render(<DataProvider />)
-    await act(async () => {
-      await Promise.resolve()
-    })
-    expect(h.navigate).not.toHaveBeenCalled()
   })
 })

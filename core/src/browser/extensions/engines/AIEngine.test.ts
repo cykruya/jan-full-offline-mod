@@ -55,10 +55,6 @@ class TestAIEngine extends AIEngine {
     return
   }
 
-  async abortImport(modelId: string): Promise<void> {
-    return
-  }
-
   async getLoadedModels(): Promise<string[]> {
     return []
   }

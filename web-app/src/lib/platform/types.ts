@@ -24,9 +24,6 @@ export enum PlatformFeature {
   // Local API server
   LOCAL_API_SERVER = 'localApiServer',
 
-  // Hub/model downloads
-  MODEL_HUB = 'modelHub',
-
   // System integrations (logs, file explorer, etc.)
   SYSTEM_INTEGRATIONS = 'systemIntegrations',
 

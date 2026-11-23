@@ -17,7 +17,6 @@
     "hardware:allow-get-system-info",
     "hardware:allow-get-system-usage",
     "llamacpp:allow-read-gguf-metadata",
-    "deep-link:allow-get-current",
     {
       "identifier": "http:default",
       "allow": [

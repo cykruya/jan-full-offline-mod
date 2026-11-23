@@ -16,7 +16,6 @@
   "newChat": "Xat nou",
   "favorites": "Preferits",
   "recents": "Recents",
-  "hub": "Hub",
   "helpSupport": "Ajuda i suport",
   "unstarAll": "Desmarca-ho tot",
   "unstar": "Desmarca",
@@ -66,12 +65,7 @@
   "noResultsFound": "No s’han trobat resultats",
   "noThreadsYet": "Encara no hi ha cap fil",
   "noThreadsYetDesc": "Inicia una conversa nova per veure aquí l’historial dels teus fils.",
-  "downloads": "Descàrregues",
-  "downloading": "S’està descarregant",
   "uploadingAttachments": "S’estan pujant els fitxers adjunts…",
-  "cancelDownload": "Cancel·la la descàrrega",
-  "downloadCancelled": "Descàrrega cancel·lada",
-  "downloadComplete": "Descàrrega completada",
   "thinking": "Pensant...",
   "thought": "Pensament",
   "callingTool": "S’està cridant l’eina",
@@ -347,30 +341,6 @@
     "appUpdateDownloadFailed": {
       "title": "Error en descarregar l’actualització",
       "description": "No s’ha pogut descarregar l’actualització de l’app. Torna-ho a provar."
-    },
-    "downloadComplete": {
-      "title": "Descàrrega completada",
-      "description": "{{item}} s’ha descarregat"
-    },
-    "downloadCancelled": {
-      "title": "Descàrrega cancel·lada",
-      "description": "S’ha cancel·lat el procés de descàrrega"
-    },
-    "downloadFailed": {
-      "title": "Error de descàrrega",
-      "description": "La descàrrega de {{item}} ha fallat"
-    },
-    "modelValidationStarted": {
-      "title": "S’està validant el model",
-      "description": "El model \"{{modelId}}\" s’ha descarregat correctament. Verificant la integritat..."
-    },
-    "modelValidationFailed": {
-      "title": "La validació del model ha fallat",
-      "description": "El model descarregat \"{{modelId}}\" no ha superat la verificació d’integritat i s’ha eliminat. El fitxer pot estar corrupte o manipulat."
-    },
-    "downloadAndVerificationComplete": {
-      "title": "Descàrrega completada",
-      "description": "El model \"{{item}}\" s’ha descarregat i verificat correctament"
     },
     "projectCreated": {
       "title": "Projecte creat",

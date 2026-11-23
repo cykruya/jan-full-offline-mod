@@ -19,12 +19,6 @@ vi.mock('zustand/middleware', () => ({
   }),
 }))
 
-// Mock ServiceHub (setHuggingfaceToken persists to the keyring via set_secret)
-const mockInvoke = vi.fn().mockResolvedValue(undefined)
-vi.mock('@/hooks/useServiceHub', () => ({
-  getServiceHub: () => ({ core: () => ({ invoke: mockInvoke }) }),
-}))
-
 describe('useGeneralSetting', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -33,7 +27,6 @@ describe('useGeneralSetting', () => {
     useGeneralSetting.setState({
       currentLanguage: 'en',
       spellCheckChatInput: true,
-      huggingfaceToken: undefined,
     })
   })
 
@@ -42,10 +35,8 @@ describe('useGeneralSetting', () => {
 
     expect(result.current.currentLanguage).toBe('en')
     expect(result.current.spellCheckChatInput).toBe(true)
-    expect(result.current.huggingfaceToken).toBeUndefined()
     expect(typeof result.current.setCurrentLanguage).toBe('function')
     expect(typeof result.current.setSpellCheckChatInput).toBe('function')
-    expect(typeof result.current.setHuggingfaceToken).toBe('function')
   })
 
   describe('setCurrentLanguage', () => {
@@ -135,60 +126,6 @@ describe('useGeneralSetting', () => {
     })
   })
 
-  describe('setHuggingfaceToken', () => {
-    it('should set huggingface token', () => {
-      const { result } = renderHook(() => useGeneralSetting())
-
-      act(() => {
-        result.current.setHuggingfaceToken('test-token-123')
-      })
-
-      expect(result.current.huggingfaceToken).toBe('test-token-123')
-      expect(mockInvoke).toHaveBeenCalledWith('set_secret', {
-        key: 'huggingface',
-        value: 'test-token-123',
-      })
-    })
-
-    it('should update huggingface token', () => {
-      const { result } = renderHook(() => useGeneralSetting())
-
-      act(() => {
-        result.current.setHuggingfaceToken('old-token')
-      })
-      expect(result.current.huggingfaceToken).toBe('old-token')
-
-      act(() => {
-        result.current.setHuggingfaceToken('new-token')
-      })
-      expect(result.current.huggingfaceToken).toBe('new-token')
-    })
-
-    it('should handle empty token', () => {
-      const { result } = renderHook(() => useGeneralSetting())
-
-      act(() => {
-        result.current.setHuggingfaceToken('')
-      })
-
-      expect(result.current.huggingfaceToken).toBe('')
-    })
-
-    it('writes the token only to the keyring', () => {
-      const { result } = renderHook(() => useGeneralSetting())
-
-      act(() => {
-        result.current.setHuggingfaceToken('new-token')
-      })
-
-      expect(mockInvoke).toHaveBeenCalledTimes(1)
-      expect(mockInvoke).toHaveBeenCalledWith('set_secret', {
-        key: 'huggingface',
-        value: 'new-token',
-      })
-    })
-  })
-
   describe('state management', () => {
     it('should maintain state across multiple hook instances', () => {
       const { result: result1 } = renderHook(() => useGeneralSetting())
@@ -197,12 +134,10 @@ describe('useGeneralSetting', () => {
       act(() => {
         result1.current.setCurrentLanguage('id')
         result1.current.setSpellCheckChatInput(false)
-        result1.current.setHuggingfaceToken('shared-token')
       })
 
       expect(result2.current.currentLanguage).toBe('id')
       expect(result2.current.spellCheckChatInput).toBe(false)
-      expect(result2.current.huggingfaceToken).toBe('shared-token')
     })
   })
 
@@ -213,12 +148,10 @@ describe('useGeneralSetting', () => {
       act(() => {
         result.current.setCurrentLanguage('vn')
         result.current.setSpellCheckChatInput(false)
-        result.current.setHuggingfaceToken('complex-token-123')
       })
 
       expect(result.current.currentLanguage).toBe('vn')
       expect(result.current.spellCheckChatInput).toBe(false)
-      expect(result.current.huggingfaceToken).toBe('complex-token-123')
     })
 
     it('should handle multiple sequential updates', () => {
@@ -234,13 +167,6 @@ describe('useGeneralSetting', () => {
       expect(result.current.spellCheckChatInput).toBe(false)
 
       // Second update
-      act(() => {
-        result.current.setHuggingfaceToken('sequential-token')
-      })
-
-      expect(result.current.huggingfaceToken).toBe('sequential-token')
-
-      // Third update
       act(() => {
         result.current.setCurrentLanguage('en')
         result.current.setSpellCheckChatInput(true)

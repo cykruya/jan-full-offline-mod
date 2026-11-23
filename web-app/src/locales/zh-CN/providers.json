@@ -12,7 +12,7 @@
   "stop": "停止",
   "start": "开始",
   "noModelFound": "未找到模型",
-  "noModelFoundDesc": "可用模型将在此处列出。如果您还没有任何模型，请访问中心下载。",
+  "noModelFoundImportDesc": "可用模型将在此处列出。请使用上方的“导入”按钮添加您电脑上的模型文件。",
   "configuration": "配置",
   "apiEndpoint": "API 端点",
   "testConnection": "测试连接",

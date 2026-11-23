@@ -15,7 +15,6 @@ const emit = async (name: string, payload?: unknown) => {
 
 vi.mock('@janhq/core', () => ({
   AppEvent: { onModelImported: 'onModelImported' },
-  DownloadEvent: { onFileDownloadSuccess: 'onFileDownloadSuccess' },
   events: {
     on: (name: string, handler: (payload?: unknown) => void) => {
       ;(eventHandlers[name] ??= []).push(handler)
@@ -520,28 +519,6 @@ describe('useSetupChecklist', () => {
       expect(mockVerifyGpuOffload).toHaveBeenCalledTimes(1)
     })
 
-    it('re-checks when the engine binary finishes downloading', async () => {
-      armHealthy()
-      const { result } = renderHook(() => useSetupChecklist())
-      await waitFor(() => expect(result.current.isRunning).toBe(false))
-
-      await emit('onFileDownloadSuccess', { downloadType: 'Engine' })
-
-      await waitFor(() =>
-        expect(mockVerifyGpuOffload).toHaveBeenCalledTimes(2)
-      )
-    })
-
-    it('ignores a model download finishing', async () => {
-      armHealthy()
-      const { result } = renderHook(() => useSetupChecklist())
-      await waitFor(() => expect(result.current.isRunning).toBe(false))
-
-      await emit('onFileDownloadSuccess', { downloadType: 'Model' })
-
-      expect(mockVerifyGpuOffload).toHaveBeenCalledTimes(1)
-    })
-
     it('re-checks when the embedding model is imported', async () => {
       armHealthy()
       const { result } = renderHook(() => useSetupChecklist())
@@ -570,7 +547,7 @@ describe('useSetupChecklist', () => {
       await waitFor(() => expect(result.current.isRunning).toBe(false))
 
       unmount()
-      await emit('onFileDownloadSuccess', { downloadType: 'Engine' })
+      await emit('settingsChanged', { key: 'llamacpp_backend' })
 
       expect(mockVerifyGpuOffload).toHaveBeenCalledTimes(1)
     })
@@ -596,7 +573,7 @@ describe('useSetupChecklist', () => {
       const { result } = renderHook(() => useSetupChecklist())
       await waitFor(() => expect(mockVerifyGpuOffload).toHaveBeenCalledTimes(1))
 
-      await emit('onFileDownloadSuccess', { downloadType: 'Engine' })
+      await emit('settingsChanged', { key: 'llamacpp_backend' })
       expect(mockVerifyGpuOffload).toHaveBeenCalledTimes(1)
 
       await act(async () => {

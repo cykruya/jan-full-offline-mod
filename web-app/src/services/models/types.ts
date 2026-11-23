@@ -6,85 +6,6 @@ import { SessionInfo, modelInfo, ThreadMessage, UnloadResult } from '@janhq/core
 import type { SpecDraftKind } from '@janhq/core'
 import { Model as CoreModel } from '@janhq/core'
 
-// Types for model catalog
-export interface ModelQuant {
-  model_id: string
-  path: string
-  file_size: string
-}
-
-export interface MMProjModel {
-  model_id: string
-  path: string
-  file_size: string
-}
-
-export interface SafetensorsFile {
-  model_id: string
-  path: string
-  file_size: string
-  sha256?: string
-}
-
-export interface CatalogModel {
-  model_name: string
-  display_name?: string
-  description: string
-  library_name?: string
-  developer?: string
-  downloads: number
-  num_quants?: number
-  quants?: ModelQuant[]
-  // MTP draft companions split out of `quants` for display; resolved against
-  // the chosen quant at download time (see lib/mtp.ts).
-  specQuants?: ModelQuant[]
-  mmproj_models?: MMProjModel[]
-  num_mmproj?: number
-  safetensors_files?: SafetensorsFile[]
-  num_safetensors?: number
-  created_at?: string
-  readme?: string
-  tools?: boolean
-  is_mlx?: boolean
-}
-
-export type ModelCatalog = CatalogModel[]
-
-// HuggingFace repository information
-export interface HuggingFaceRepo {
-  id: string
-  modelId: string
-  sha: string
-  downloads: number
-  likes: number
-  library_name?: string
-  tags: string[]
-  pipeline_tag?: string
-  createdAt: string
-  last_modified: string
-  private: boolean
-  disabled: boolean
-  gated: boolean | string
-  author: string
-  cardData?: {
-    license?: string
-    language?: string[]
-    datasets?: string[]
-    metrics?: string[]
-  }
-  siblings?: Array<{
-    rfilename: string
-    size?: number
-    blobId?: string
-    lfs?: {
-      sha256: string
-      size: number
-      pointerSize: number
-    }
-  }>
-  readme?: string
-}
-
 export interface GgufMetadata {
   version: number
   tensor_count: number
@@ -97,49 +18,18 @@ export interface ModelValidationResult {
   metadata?: GgufMetadata
 }
 
-
-export type PreflightReason =
-  | 'AUTH_REQUIRED'
-  | 'LICENSE_NOT_ACCEPTED'
-  | 'NOT_FOUND'
-  | 'RATE_LIMITED'
-  | 'NETWORK'
-  | 'UNKNOWN'
-
 export interface ModelsService {
   getModel(modelId: string): Promise<modelInfo | undefined>
   getModelContextLimit(modelId: string, provider: string): Promise<number | undefined>
   fetchModels(): Promise<modelInfo[]>
-  fetchModelCatalog(): Promise<ModelCatalog>
-  fetchLatestJanModel(): Promise<CatalogModel | null>
-  fetchHuggingFaceRepo(
-    repoId: string,
-    hfToken?: string
-  ): Promise<HuggingFaceRepo | null>
-  convertHfRepoToCatalogModel(repo: HuggingFaceRepo): CatalogModel
   updateModel(modelId: string, model: Partial<CoreModel>): Promise<void>
   pullModel(
     id: string,
     modelPath: string,
-    modelSha256?: string,
-    modelSize?: number,
     mmprojPath?: string,
-    mmprojSha256?: string,
-    mmprojSize?: number,
     specDraftPath?: string,
     specDraftKind?: SpecDraftKind
   ): Promise<void>
-  pullModelWithMetadata(
-    id: string,
-    modelPath: string,
-    mmprojPath?: string,
-    hfToken?: string,
-    skipVerification?: boolean,
-    specDraftPath?: string,
-    specDraftKind?: SpecDraftKind
-  ): Promise<void>
-  abortDownload(id: string): Promise<void>
-  pauseDownload(id: string): Promise<void>
   deleteModel(id: string, provider?: string): Promise<void>
   getActiveModels(provider?: string): Promise<string[]>
   stopModel(model: string, provider?: string): Promise<UnloadResult | undefined>

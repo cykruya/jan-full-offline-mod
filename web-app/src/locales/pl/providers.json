@@ -12,7 +12,6 @@
   "stop": "Zatrzymaj",
   "start": "Uruchom",
   "noModelFound": "Brak modeli",
-  "noModelFoundDesc": "Tutaj będą wymienione dostępne modele. Odwiedź Centrum Modeli żeby jakiś pobrać.",
   "configuration": "Ustawienia",
   "apiEndpoint": "Punkt Końcowy API",
   "testConnection": "Sprawdź Połączenie",

@@ -416,15 +416,10 @@ export const ImportLlamacppModelDialog = ({
     setImporting(true)
 
     try {
-      // Let backend calculate SHA256 and sizes for all files
       await serviceHub.models().pullModel(
         modelName,
         modelFile,
-        undefined, // modelSha256
-        undefined, // modelSize
         isMultimodal && mmProjFile ? mmProjFile : undefined,
-        undefined, // mmprojSha256
-        undefined, // mmprojSize
         isDraftModel && draftFile ? draftFile : undefined
       )
 

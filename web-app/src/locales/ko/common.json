@@ -28,7 +28,6 @@
   "openclawAgent": "OpenClaw 에이전트",
   "favorites": "즐겨찾기",
   "recents": "최근 항목",
-  "hub": "허브",
   "helpSupport": "도움말 및 지원",
   "unstarAll": "모든 즐겨찾기 해제",
   "unstar": "즐겨찾기 해제",
@@ -84,12 +83,7 @@
   "noResultsFound": "검색 결과가 없습니다",
   "noThreadsYet": "아직 스레드가 없습니다",
   "noThreadsYetDesc": "새 대화를 시작하면 여기에 스레드 기록이 표시됩니다.",
-  "downloads": "다운로드",
-  "downloading": "다운로드 중",
   "uploadingAttachments": "첨부 파일 업로드 중…",
-  "cancelDownload": "다운로드 취소",
-  "downloadCancelled": "다운로드 취소됨",
-  "downloadComplete": "다운로드 완료",
   "thinking": "생각 중...",
   "thought": "생각",
   "callingTool": "도구 호출 중",
@@ -382,30 +376,6 @@
     "appUpdateDownloadFailed": {
       "title": "앱 업데이트 다운로드 실패",
       "description": "앱 업데이트를 다운로드하지 못했습니다. 다시 시도해 주세요."
-    },
-    "downloadComplete": {
-      "title": "다운로드 완료",
-      "description": "{{item}} 다운로드됨"
-    },
-    "downloadCancelled": {
-      "title": "다운로드 취소됨",
-      "description": "다운로드 프로세스가 취소되었습니다"
-    },
-    "downloadFailed": {
-      "title": "다운로드 실패",
-      "description": "{{item}} 다운로드를 실패했습니다"
-    },
-    "modelValidationStarted": {
-      "title": "모델 검증 중",
-      "description": "\"{{modelId}}\" 모델을 성공적으로 다운로드했습니다. 무결성을 확인하는 중..."
-    },
-    "modelValidationFailed": {
-      "title": "모델 검증 실패",
-      "description": "다운로드한 \"{{modelId}}\" 모델이 무결성 검증에 실패하여 제거되었습니다. 파일이 손상되었거나 변조되었을 수 있습니다."
-    },
-    "downloadAndVerificationComplete": {
-      "title": "다운로드 완료",
-      "description": "\"{{item}}\" 모델이 성공적으로 다운로드 및 검증되었습니다"
     },
     "projectCreated": {
       "title": "프로젝트 생성됨",

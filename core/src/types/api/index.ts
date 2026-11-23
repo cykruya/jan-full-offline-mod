@@ -73,16 +73,6 @@ export enum AppEvent {
   onBackendUpdateQueued = 'onBackendUpdateQueued',
 }
 
-export enum DownloadEvent {
-  onFileDownloadUpdate = 'onFileDownloadUpdate',
-  onFileDownloadError = 'onFileDownloadError',
-  onFileDownloadSuccess = 'onFileDownloadSuccess',
-  onFileDownloadStopped = 'onFileDownloadStopped',
-  onFileDownloadStarted = 'onFileDownloadStarted',
-  onModelValidationStarted = 'onModelValidationStarted',
-  onModelValidationFailed = 'onModelValidationFailed',
-  onFileDownloadAndVerificationSuccess = 'onFileDownloadAndVerificationSuccess',
-}
 export enum FileSystemRoute {
   appendFileSync = 'appendFileSync',
   unlinkSync = 'unlinkSync',
@@ -96,11 +86,6 @@ export enum FileSystemRoute {
   readYaml = 'readYaml',
   writeYaml = 'writeYaml',
   decompress = 'decompress',
-}
-export enum DownloadRoute {
-  downloadFiles = 'downloadFiles',
-  cancelDownloadTask = 'cancelDownloadTask',
-  pauseDownloadTask = 'pauseDownloadTask',
 }
 export enum FileManagerRoute {
   copyFile = 'copyFile',
@@ -127,16 +112,8 @@ export type AppEventFunctions = {
   [K in AppEvent]: ApiFunction
 }
 
-export type DownloadEventFunctions = {
-  [K in DownloadEvent]: ApiFunction
-}
-
 export type FileSystemRouteFunctions = {
   [K in FileSystemRoute]: ApiFunction
-}
-
-export type DownloadRouteFunctions = {
-  [K in DownloadRoute]: ApiFunction
 }
 
 export type FileManagerRouteFunctions = {
@@ -146,22 +123,19 @@ export type FileManagerRouteFunctions = {
 export type APIFunctions = NativeRouteFunctions &
   AppRouteFunctions &
   AppEventFunctions &
-  DownloadEventFunctions &
   FileSystemRouteFunctions &
-  DownloadRouteFunctions &
   FileManagerRoute
 
 export const CoreRoutes = [
   ...Object.values(AppRoute),
   ...Object.values(FileSystemRoute),
   ...Object.values(FileManagerRoute),
-  ...Object.values(DownloadRoute),
   'launchClaudeCodeWithConfig',
   'writeEnvFileToConfig',
 ]
 
 export const APIRoutes = [...CoreRoutes, ...Object.values(NativeRoute)]
-export const APIEvents = [...Object.values(AppEvent), ...Object.values(DownloadEvent)]
+export const APIEvents = [...Object.values(AppEvent)]
 export type PayloadType = {
   messages: ChatCompletionMessage[]
   model: string

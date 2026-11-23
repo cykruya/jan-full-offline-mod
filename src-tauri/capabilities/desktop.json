@@ -27,7 +27,6 @@
     "rag:default",
     "websearch:default",
     "llamacpp:default",
-    "deep-link:default",
     "hardware:default",
     {
       "identifier": "http:default",

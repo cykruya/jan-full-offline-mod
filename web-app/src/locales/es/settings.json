@@ -232,8 +232,6 @@
     "keepModelsAndConfigsDesc": "Downloaded models, engine settings, and MCP configurations will be preserved.",
     "cancel": "Cancelar",
     "reset": "Restablecer",
-    "huggingfaceToken": "Token de HuggingFace",
-    "huggingfaceTokenDesc": "Tu token de API de HuggingFace para acceder a modelos.",
     "resources": "Recursos",
     "documentation": "Documentación",
     "documentationDesc": "Aprende a usar Jan y explora sus funciones.",

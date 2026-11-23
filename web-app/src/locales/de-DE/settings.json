@@ -216,8 +216,6 @@
     "keepModelsAndConfigsDesc": "Downloaded models, engine settings, and MCP configurations will be preserved.",
     "cancel": "Abbrechen",
     "reset": "Zurücksetzen",
-    "huggingfaceToken": "HuggingFace Token",
-    "huggingfaceTokenDesc": "Dein HuggingFace API-Token für den Zugriff auf Modelle.",
     "janCli": "Jan CLI",
     "janCliDesc": "Führe den Jan-Agent in deinem Terminal aus. Folge der Anleitung, um ihn zu installieren und loszulegen.",
     "janCliSetupGuide": "Einrichtungsanleitung",

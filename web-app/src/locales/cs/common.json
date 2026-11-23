@@ -22,7 +22,6 @@
   "chats": "Chaty",
   "favorites": "Oblíbené",
   "recents": "Nedávné",
-  "hub": "Centrum",
   "helpSupport": "Nápověda a podpora",
   "unstarAll": "Odebrat vše z oblíbených",
   "unstar": "Odebrat z oblíbených",
@@ -73,12 +72,7 @@
   "noResultsFound": "Nebyly nalezeny žádné výsledky",
   "noThreadsYet": "Zatím žádná vlákna",
   "noThreadsYetDesc": "Začněte novou konverzaci a uvidíte zde historii vláken.",
-  "downloads": "Stahování",
-  "downloading": "Stahování",
   "uploadingAttachments": "Nahrávání příloh…",
-  "cancelDownload": "Zrušit stahování",
-  "downloadCancelled": "Stahování zrušeno",
-  "downloadComplete": "Stahování dokončeno",
   "thinking": "Přemýšlím...",
   "thought": "Myšlenka",
   "callingTool": "Volání nástroje",
@@ -344,30 +338,6 @@
     "appUpdateDownloadFailed": {
       "title": "Stahování aktualizace aplikace selhalo",
       "description": "Nepodařilo se stáhnout aktualizaci aplikace. Zkuste to prosím znovu."
-    },
-    "downloadComplete": {
-      "title": "Stahování dokončeno",
-      "description": "{{item}} byl stažen"
-    },
-    "downloadCancelled": {
-      "title": "Stahování zrušeno",
-      "description": "Proces stahování byl zrušen"
-    },
-    "downloadFailed": {
-      "title": "Stahování selhalo",
-      "description": "Stahování {{item}} selhalo"
-    },
-    "modelValidationStarted": {
-      "title": "Ověřování modelu",
-      "description": "Model \"{{modelId}}\" byl úspěšně stažen. Ověřování integrity..."
-    },
-    "modelValidationFailed": {
-      "title": "Ověření modelu selhalo",
-      "description": "Stažený model \"{{modelId}}\" selhal při ověření integrity a byl odstraněn. Soubor může být poškozen nebo zmanipulován."
-    },
-    "downloadAndVerificationComplete": {
-      "title": "Stahování dokončeno",
-      "description": "Model \"{{item}}\" byl úspěšně stažen a ověřen"
     },
     "projectCreated": {
       "title": "Projekt vytvořen",

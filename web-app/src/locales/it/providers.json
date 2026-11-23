@@ -21,7 +21,6 @@
   "stop": "Interrompi",
   "start": "Avvia",
   "noModelFound": "Nessun modello trovato",
-  "noModelFoundDesc": "I modelli disponibili saranno elencati qui. Se non hai ancora nessun modello, visita l'Hub per scaricarne uno.",
   "noModelFoundRemoteDesc": "I modelli disponibili saranno elencati qui. Usa il pulsante Aggiorna in alto per recuperare i modelli dal provider, oppure aggiungine uno manualmente con il pulsante +.",
   "configuration": "Configurazione",
   "apiEndpoint": "Endpoint API",

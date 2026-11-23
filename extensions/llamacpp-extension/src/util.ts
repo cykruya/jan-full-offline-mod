@@ -1,24 +1,9 @@
-import { logger } from '@janhq/core'
 import type { SpecDraftKind } from '@janhq/core'
 import type {
   TemplateKwarg,
   TemplateKwargType,
 } from '@janhq/tauri-plugin-llamacpp-api'
 import { getBackendSetting, setBackendSetting } from './backend-settings'
-
-// Zustand proxy state structure
-interface ProxyState {
-  proxyEnabled: boolean
-  proxyUrl: string
-  proxyUsername: string
-  proxyPassword: string
-  proxyIgnoreSSL: boolean
-  verifyProxySSL: boolean
-  verifyProxyHostSSL: boolean
-  verifyPeerSSL: boolean
-  verifyHostSSL: boolean
-  noProxy: string
-}
 
 /**
  * The last segment of a host path. Pure string work: the paths come from the
@@ -70,79 +55,6 @@ export async function setDefaultEmbeddingModelId(
     await setBackendSetting(DEFAULT_EMBEDDING_MODEL_KEY, serialized)
   } catch {
     /* non-fatal */
-  }
-}
-
-export async function getProxyConfig(): Promise<Record<
-  string,
-  string | string[] | boolean
-> | null> {
-  try {
-    const proxyConfigString = await getBackendSetting('setting-proxy-config')
-    if (!proxyConfigString) {
-      return null
-    }
-
-    const proxyConfigData = JSON.parse(proxyConfigString)
-
-    const proxyState: ProxyState = proxyConfigData?.state
-
-    // Only return proxy config if proxy is enabled
-    if (!proxyState || !proxyState.proxyEnabled || !proxyState.proxyUrl) {
-      return null
-    }
-
-    const proxyConfig: Record<string, string | string[] | boolean> = {
-      url: proxyState.proxyUrl,
-    }
-
-    // Add username/password if both are provided
-    if (proxyState.proxyUsername && proxyState.proxyPassword) {
-      proxyConfig.username = proxyState.proxyUsername
-      proxyConfig.password = proxyState.proxyPassword
-    }
-
-    // Parse no_proxy list if provided
-    if (proxyState.noProxy) {
-      const noProxyList = proxyState.noProxy
-        .split(',')
-        .map((s: string) => s.trim())
-        .filter((s: string) => s.length > 0)
-
-      if (noProxyList.length > 0) {
-        proxyConfig.no_proxy = noProxyList
-      }
-    }
-
-    // Add SSL verification settings
-    proxyConfig.ignore_ssl = proxyState.proxyIgnoreSSL
-    proxyConfig.verify_proxy_ssl = proxyState.verifyProxySSL
-    proxyConfig.verify_proxy_host_ssl = proxyState.verifyProxyHostSSL
-    proxyConfig.verify_peer_ssl = proxyState.verifyPeerSSL
-    proxyConfig.verify_host_ssl = proxyState.verifyHostSSL
-
-    logger.info('Using proxy configuration:', {
-      url: proxyState.proxyUrl,
-      hasAuth: !!(proxyState.proxyUsername && proxyState.proxyPassword),
-      noProxyCount: proxyConfig.no_proxy
-        ? (proxyConfig.no_proxy as string[]).length
-        : 0,
-      ignoreSSL: proxyState.proxyIgnoreSSL,
-      verifyProxySSL: proxyState.verifyProxySSL,
-      verifyProxyHostSSL: proxyState.verifyProxyHostSSL,
-      verifyPeerSSL: proxyState.verifyPeerSSL,
-      verifyHostSSL: proxyState.verifyHostSSL,
-    })
-
-    return proxyConfig
-  } catch (error) {
-    logger.error('Failed to parse proxy configuration:', error)
-    if (error instanceof SyntaxError) {
-      // JSON parsing error - return null
-      return null
-    }
-    // Other errors (like missing state) - throw
-    throw error
   }
 }
 

@@ -37,7 +37,6 @@ vi.mock('@tanstack/react-router', () => ({
 
 vi.mock('@janhq/core', () => ({
   AppEvent: { onModelImported: 'onModelImported' },
-  DownloadEvent: { onFileDownloadSuccess: 'onFileDownloadSuccess' },
   events: {
     on: vi.fn((name: string, handler: any) => {
       hoisted.eventHandlers[name] = handler

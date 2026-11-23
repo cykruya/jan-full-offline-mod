@@ -232,8 +232,6 @@
     "keepModelsAndConfigsDesc": "डाउनलोड किए गए मॉडल, इंजन सेटिंग्स और MCP कॉन्फ़िगरेशन सुरक्षित रहेंगे।",
     "cancel": "रद्द करें",
     "reset": "रीसेट करें",
-    "huggingfaceToken": "HuggingFace टोकन",
-    "huggingfaceTokenDesc": "मॉडलों तक पहुंच के लिए आपका HuggingFace API टोकन।",
     "resources": "संसाधन",
     "documentation": "दस्तावेज़",
     "documentationDesc": "Jan का उपयोग करना सीखें और इसकी विशेषताओं का अन्वेषण करें।",

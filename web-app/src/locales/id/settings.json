@@ -219,8 +219,6 @@
     "keepModelsAndConfigsDesc": "Downloaded models, engine settings, and MCP configurations will be preserved.",
     "cancel": "Batal",
     "reset": "Setel Ulang",
-    "huggingfaceToken": "Token HuggingFace",
-    "huggingfaceTokenDesc": "Token API HuggingFace Anda untuk mengakses model.",
     "resources": "Sumber Daya",
     "documentation": "Dokumentasi",
     "documentationDesc": "Pelajari cara menggunakan Jan dan jelajahi fitur-fiturnya.",

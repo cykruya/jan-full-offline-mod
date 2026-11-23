@@ -14,7 +14,6 @@ vi.mock('@/i18n/react-i18next-compat', () => ({
 }))
 vi.mock('@/hooks/useLeftPanel', () => ({ useLeftPanel: () => ({ open: true }) }))
 vi.mock('@/stores/titlebar-layout-store', () => ({ useTitlebarLayout: () => 0 }))
-vi.mock('@/containers/DownloadManegement', () => ({ DownloadManagement: () => null }))
 vi.mock('@/containers/dialogs/SkillsManagerDialog', () => ({
   default: ({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) =>
     open ? <div role="dialog"><button onClick={() => onOpenChange(false)}>Close skills</button></div> : null,
@@ -73,7 +72,7 @@ it('places Artifacts and Skills without replacing the rest of the navigation', (
   expect(screen.queryByText('common:customize')).not.toBeInTheDocument()
   const artifacts = screen.getByTestId('nav-artifacts')
   expect(screen.getByText('common:search').compareDocumentPosition(artifacts) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-  expect(artifacts.compareDocumentPosition(screen.getByText('common:hub')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(artifacts.compareDocumentPosition(screen.getByText('common:settings')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   expect(screen.getByText('common:newChat')).toBeInTheDocument()
   expect(screen.getByText('Chats and tasks')).toBeInTheDocument()
 })

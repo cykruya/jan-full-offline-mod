@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import llamacpp_extension from '../index'
-import { hostServices, loopbackFetch, newExtension } from './host'
+import { loopbackFetch, newExtension } from './host'
 import { fs, getJanDataFolderPath, joinPath } from '@janhq/core'
 import {
   readGgufMetadata,
@@ -241,81 +241,15 @@ describe('llamacpp_extension', () => {
         .rejects.toThrow('Model test-model already exists')
     })
 
-    it('should import model from URL', async () => {
-      const { getJanDataFolderPath, joinPath, fs } = await import('@janhq/core')
-      const apiModule = await import('@janhq/tauri-plugin-llamacpp-api')
-      vi.mocked(apiModule.readGgufMetadata).mockResolvedValue({
-        version: 3,
-        tensor_count: 1,
-        metadata: { 'general.architecture': 'llama' },
-      } as any)
-
-      const mockDownloadManager = {
-        downloadFiles: vi.fn().mockResolvedValue(undefined)
-      }
-
-      const { ServiceKeys } = await import('@janhq/core')
-      const getService = vi.fn().mockReturnValue(mockDownloadManager)
-      hostServices.get = getService
-
-      vi.mocked(getJanDataFolderPath).mockResolvedValue('/path/to/jan')
+    it('refuses a URL, since nothing is downloaded', async () => {
+      const { joinPath, fs } = await import('@janhq/core')
       vi.mocked(joinPath).mockImplementation((paths) => Promise.resolve(paths.join('/')))
       vi.mocked(fs.existsSync).mockResolvedValue(false)
-      vi.mocked(fs.fileStat).mockResolvedValue({ size: 1000000 })
-      vi.mocked(fs.mkdir).mockResolvedValue(undefined)
-      vi.mocked(fs.writeYaml).mockResolvedValue(undefined)
 
-      await extension.import('test-model', {
-        modelPath: 'https://example.com/model.gguf'
-      })
-
-      expect(getService).toHaveBeenCalledWith(ServiceKeys.Downloads)
-      expect(mockDownloadManager.downloadFiles).toHaveBeenCalled()
-      expect(fs.mkdir).toHaveBeenCalled()
-      expect(fs.writeYaml).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.any(Object)
-      )
-    })
-  })
-
-  describe('pauseImport / abortImport', () => {
-    const downloads = () => ({
-      pauseDownload: vi.fn().mockResolvedValue(undefined),
-      cancelDownload: vi.fn().mockResolvedValue(undefined),
-    })
-
-    it('pauses the task through the host Downloads service', async () => {
-      const { ServiceKeys } = await import('@janhq/core')
-      const service = downloads()
-      const getService = vi.fn().mockReturnValue(service)
-      hostServices.get = getService
-
-      await extension.pauseImport('m1')
-
-      expect(getService).toHaveBeenCalledWith(ServiceKeys.Downloads)
-      expect(service.pauseDownload).toHaveBeenCalledWith('llamacpp/m1')
-    })
-
-    it('cancels the task through the host Downloads service', async () => {
-      const { fs, joinPath } = await import('@janhq/core')
-      vi.mocked(joinPath).mockImplementation((paths) =>
-        Promise.resolve(paths.join('/'))
-      )
-      vi.mocked(fs.existsSync).mockResolvedValue(false)
-      const service = downloads()
-      hostServices.get = vi.fn().mockReturnValue(service)
-
-      await extension.abortImport('m1')
-
-      expect(service.cancelDownload).toHaveBeenCalledWith('llamacpp/m1')
-    })
-
-    it('fails the import loudly when no Downloads service is provided', async () => {
-      hostServices.get = vi.fn().mockReturnValue(undefined)
-      await expect(extension.pauseImport('m1')).rejects.toThrow(
-        'Downloads service is not available'
-      )
+      await expect(
+        extension.import('test-model', { modelPath: 'https://example.com/model.gguf' })
+      ).rejects.toThrow('File not found: https://example.com/model.gguf')
+      expect(fs.writeYaml).not.toHaveBeenCalled()
     })
   })
 
@@ -1105,7 +1039,7 @@ describe('bootstrapDefaultEmbedder', () => {
         { id: 'sentence-transformer-mini', embedding: true },
       ] as never)
     const importSpy = vi
-      .spyOn(extension, 'import')
+      .spyOn(extension as any, 'runImport')
       .mockResolvedValue(undefined as never)
 
     await extension['bootstrapDefaultEmbedder']()
@@ -1131,7 +1065,7 @@ describe('bootstrapDefaultEmbedder', () => {
     vi.spyOn(extension, 'list').mockResolvedValue([
       { id: 'custom-embedder', embedding: true },
     ] as never)
-    const importSpy = vi.spyOn(extension, 'import')
+    const importSpy = vi.spyOn(extension as any, 'runImport')
 
     await extension['bootstrapDefaultEmbedder']()
 
@@ -1157,7 +1091,7 @@ describe('bootstrapDefaultEmbedder', () => {
     vi.mocked(getBackendSetting).mockResolvedValue(null)
     vi.spyOn(extension, 'list').mockResolvedValue([] as never)
     vi.mocked(fs.copyBundledModel).mockRejectedValueOnce(new Error('not bundled'))
-    const importSpy = vi.spyOn(extension, 'import')
+    const importSpy = vi.spyOn(extension as any, 'runImport')
 
     await expect(
       extension['bootstrapDefaultEmbedder']()
@@ -1371,11 +1305,11 @@ describe('bootstrapDefaultEmbedder failure reporting', () => {
   it('records why the bootstrap failed instead of only logging it', async () => {
     vi.mocked(getBackendSetting).mockResolvedValue(null)
     vi.spyOn(extension, 'list').mockResolvedValue([] as never)
-    vi.spyOn(extension, 'import').mockRejectedValue(new Error('offline'))
+    vi.spyOn(extension as any, 'runImport').mockRejectedValue(new Error('invalid gguf'))
 
     await extension['bootstrapDefaultEmbedder']()
 
-    expect(extension.getEmbedderBootstrapError()).toContain('offline')
+    expect(extension.getEmbedderBootstrapError()).toContain('invalid gguf')
   })
 
   it('leaves no error recorded on success', async () => {
@@ -1392,11 +1326,11 @@ describe('bootstrapDefaultEmbedder failure reporting', () => {
   it('clears a previous error once a later attempt succeeds', async () => {
     vi.mocked(getBackendSetting).mockResolvedValue(null)
     vi.spyOn(extension, 'list').mockResolvedValue([] as never)
-    vi.spyOn(extension, 'import').mockRejectedValue(new Error('offline'))
+    vi.spyOn(extension as any, 'runImport').mockRejectedValue(new Error('invalid gguf'))
     await extension['bootstrapDefaultEmbedder']()
     expect(extension.getEmbedderBootstrapError()).toBeDefined()
 
-    vi.spyOn(extension, 'import').mockResolvedValue(undefined as never)
+    vi.spyOn(extension as any, 'runImport').mockResolvedValue(undefined as never)
     vi.spyOn(extension, 'list').mockResolvedValue([
       { id: 'sentence-transformer-mini', embedding: true },
     ] as never)
@@ -1405,14 +1339,14 @@ describe('bootstrapDefaultEmbedder failure reporting', () => {
     expect(extension.getEmbedderBootstrapError()).toBeUndefined()
   })
 
-  // A cancelled download resolves without throwing. Trusting that resolution
-  // marked the one-shot bootstrap done for a model that was never installed, so
-  // it never retried and the embedder stayed permanently missing.
+  // The install is confirmed by re-listing rather than by the import
+  // resolving, so the one-shot bootstrap is never marked done for a model that
+  // is not there.
   it('does not mark done when the import resolves without installing anything', async () => {
     vi.mocked(getBackendSetting).mockResolvedValue(null)
     vi.spyOn(extension, 'list').mockResolvedValue([] as never)
     const importSpy = vi
-      .spyOn(extension, 'import')
+      .spyOn(extension as any, 'runImport')
       .mockResolvedValue(undefined as never)
 
     await extension['bootstrapDefaultEmbedder']()
@@ -1510,46 +1444,6 @@ describe('reportMissingLibrariesFromError', () => {
   })
 })
 
-describe('createDownloadTaskId', () => {
-  let extension: llamacpp_extension
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-    extension = newExtension()
-  })
-
-  const taskId = (modelId: string) =>
-    extension['createDownloadTaskId'](modelId) as string
-
-  // The id becomes the Tauri event name `download-<taskId>`, which rejects dots.
-  it('contains no dots', () => {
-    expect(taskId('Jan-v3.5-4B-Q4_K_XL')).not.toContain('.')
-  })
-
-  // Truncating at the first dot collapsed every quant of a dotted model name onto
-  // one id. Rust cancels an in-flight task whose id repeats and deletes its
-  // partial file, so downloading one quant destroyed another's.
-  it('keeps quants of the same dotted model distinct', () => {
-    expect(taskId('Jan-v3.5-4B-Q4_K_XL')).not.toBe(
-      taskId('Jan-v3.5-4B-Q8_0')
-    )
-  })
-
-  it('keeps different versions of the same family distinct', () => {
-    expect(taskId('Jan-v3.5-4B-Q4_K_XL')).not.toBe(
-      taskId('Jan-v3.6-4B-Q4_K_XL')
-    )
-  })
-
-  it('namespaces by provider and preserves the rest of the id', () => {
-    expect(taskId('some/model-q4_k_m')).toBe('llamacpp/some/model-q4_k_m')
-  })
-
-  it('is stable for the same model id', () => {
-    expect(taskId('Jan-v3.5-4B-Q4_K_XL')).toBe(taskId('Jan-v3.5-4B-Q4_K_XL'))
-  })
-})
-
 describe('import deduplication', () => {
   let extension: llamacpp_extension
 
@@ -1558,9 +1452,8 @@ describe('import deduplication', () => {
     extension = newExtension()
   })
 
-  // Two callers racing on one model both passed the model.yml guard and then
-  // registered the same download task id, which Rust resolves by cancelling the
-  // first and deleting its partial file.
+  // Two callers racing on one model both passed the model.yml guard, and the
+  // loser then failed on a model the winner had just installed.
   it('joins a concurrent import of the same model', async () => {
     let release: (() => void) | undefined
     const runImport = vi
@@ -1575,6 +1468,27 @@ describe('import deduplication', () => {
     expect(runImport).toHaveBeenCalledTimes(1)
     release?.()
     await Promise.all([first, second])
+  })
+
+  // The startup bootstrap and an on-demand embed can both ask for the bundled
+  // embedder; its copy and its import must each happen once.
+  it('joins concurrent installs of the bundled embedder', async () => {
+    let release: (() => void) | undefined
+    vi.mocked(fs.copyBundledModel).mockImplementation(
+      () => new Promise<void>((resolve) => (release = resolve))
+    )
+    const runImport = vi
+      .spyOn(extension as never, 'runImport')
+      .mockResolvedValue(undefined as never)
+
+    const first = extension['importFallbackEmbedder']()
+    const second = extension['importFallbackEmbedder']()
+    const third = extension.import('sentence-transformer-mini', { modelPath: 'x' } as never)
+    release?.()
+    await Promise.all([first, second, third])
+
+    expect(fs.copyBundledModel).toHaveBeenCalledTimes(1)
+    expect(runImport).toHaveBeenCalledTimes(1)
   })
 
   it('does not join imports of different models', async () => {

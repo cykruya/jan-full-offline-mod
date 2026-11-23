@@ -4,68 +4,21 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 
-/// Runs a parse over a gguf, local or remote.
-///
-/// A remote file is fetched in range chunks and the parse retried after each
-/// one, since neither the KV section nor the tensor-info block has a length
-/// known up front. `what` names the parse in the error, which is all that
-/// differs between callers -- the fetch loop is shared so the chunking rules
-/// cannot drift apart.
+/// Runs a parse over a gguf on disk. `what` names the parse in the error,
+/// which is all that differs between callers.
 async fn parse_gguf<T, F>(path: &str, what: &str, parse: F) -> Result<T, String>
 where
     F: Fn(&mut (dyn ReadSeek + '_)) -> std::io::Result<T>,
 {
-    if path.starts_with("http://") || path.starts_with("https://") {
-        // Remote: read in 2MB chunks until successful
-        let client = reqwest::Client::new();
-        let chunk_size = 2 * 1024 * 1024; // Fixed 2MB chunks
-        let max_total_size = 120 * 1024 * 1024; // Don't exceed 120MB total
-        let mut total_downloaded = 0;
-        let mut accumulated_data = Vec::new();
+    let file =
+        File::open(path).map_err(|e| format!("Failed to open local file {}: {}", path, e))?;
+    let mut reader = BufReader::new(file);
 
-        while total_downloaded < max_total_size {
-            let start = total_downloaded;
-            let end = std::cmp::min(start + chunk_size - 1, max_total_size - 1);
-
-            let resp = client
-                .get(path)
-                .header("Range", format!("bytes={}-{}", start, end))
-                .send()
-                .await
-                .map_err(|e| format!("Failed to fetch chunk {}-{}: {}", start, end, e))?;
-
-            let chunk_data = resp
-                .bytes()
-                .await
-                .map_err(|e| format!("Failed to read chunk response: {}", e))?;
-
-            accumulated_data.extend_from_slice(&chunk_data);
-            total_downloaded += chunk_data.len();
-
-            // Try parsing after each chunk
-            let mut cursor = std::io::Cursor::new(accumulated_data.as_slice());
-            if let Ok(parsed) = parse(&mut cursor) {
-                return Ok(parsed);
-            }
-
-            // If we got less data than expected, we've reached EOF
-            if chunk_data.len() < chunk_size {
-                break;
-            }
-        }
-        Err(format!("Could not read {} from downloaded data", what))
-    } else {
-        // Local: use streaming file reader
-        let file =
-            File::open(path).map_err(|e| format!("Failed to open local file {}: {}", path, e))?;
-        let mut reader = BufReader::new(file);
-
-        parse(&mut reader).map_err(|e| format!("Failed to parse {}: {}", what, e))
-    }
+    parse(&mut reader).map_err(|e| format!("Failed to parse {}: {}", what, e))
 }
 
-/// One trait object for the two readers `parse_gguf` hands out, so the parse
-/// closure does not have to be generic over both.
+/// The reader `parse_gguf` hands out, as a trait object so the parse closure
+/// does not have to be generic.
 pub trait ReadSeek: std::io::Read + std::io::Seek {}
 impl<T: std::io::Read + std::io::Seek> ReadSeek for T {}
 

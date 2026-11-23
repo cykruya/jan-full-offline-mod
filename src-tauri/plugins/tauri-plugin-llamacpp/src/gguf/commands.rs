@@ -24,31 +24,9 @@ pub async fn find_gguf_tensors(path: String, names: Vec<String>) -> Result<Vec<S
 }
 
 pub async fn get_model_size(path: String) -> Result<u64, String> {
-    if path.starts_with("https://") {
-        // Handle remote URL
-        let client = reqwest::Client::new();
-        let response = client
-            .head(&path)
-            .send()
-            .await
-            .map_err(|e| format!("Failed to fetch HEAD request: {}", e))?;
-
-        if let Some(content_length) = response.headers().get("content-length") {
-            let content_length_str = content_length
-                .to_str()
-                .map_err(|e| format!("Invalid content-length header: {}", e))?;
-            content_length_str
-                .parse::<u64>()
-                .map_err(|e| format!("Failed to parse content-length: {}", e))
-        } else {
-            Ok(0)
-        }
-    } else {
-        // Handle local file using standard fs
-        let metadata =
-            fs::metadata(&path).map_err(|e| format!("Failed to get file metadata: {}", e))?;
-        Ok(metadata.len())
-    }
+    let metadata =
+        fs::metadata(&path).map_err(|e| format!("Failed to get file metadata: {}", e))?;
+    Ok(metadata.len())
 }
 
 #[tauri::command]
@@ -82,19 +60,13 @@ pub async fn is_model_supported(
     };
 
     // Multimodal projector lives next to model.gguf as mmproj.gguf and is
-    // loaded into the same device alongside the weights + KV cache. Only
-    // inspected for local paths — remote URLs route through the importer
-    // and won't hit this branch with the final on-disk layout.
-    let mmproj_size: u64 = if path.starts_with("https://") {
-        0
-    } else {
-        std::path::Path::new(&path)
-            .parent()
-            .map(|d| d.join("mmproj.gguf"))
-            .and_then(|p| fs::metadata(&p).ok())
-            .map(|m| m.len())
-            .unwrap_or(0)
-    };
+    // loaded into the same device alongside the weights + KV cache.
+    let mmproj_size: u64 = std::path::Path::new(&path)
+        .parent()
+        .map(|d| d.join("mmproj.gguf"))
+        .and_then(|p| fs::metadata(&p).ok())
+        .map(|m| m.len())
+        .unwrap_or(0);
     if mmproj_size > 0 {
         log::info!("mmprojSize: {}", mmproj_size);
     }

@@ -6,14 +6,11 @@ import { useServiceHub } from '@/hooks/useServiceHub'
 import { useEffect, useRef } from 'react'
 import { useMCPServers, DEFAULT_MCP_SETTINGS } from '@/hooks/useMCPServers'
 import { useAssistant } from '@/hooks/useAssistant'
-import { useNavigate } from '@tanstack/react-router'
-import { route } from '@/constants/routes'
 import { useThreads } from '@/hooks/useThreads'
 import { useCoworkSessions } from '@/hooks/useCoworkSessions'
 import { useLocalApiServer } from '@/hooks/useLocalApiServer'
 import { useAppState } from '@/hooks/useAppState'
-import { AppEvent, events, HUGGINGFACE_TOKEN_SECRET_KEY } from '@janhq/core'
-import { SystemEvent } from '@/types/events'
+import { AppEvent, events } from '@janhq/core'
 import { isDev } from '@/lib/utils'
 import { sweepThreadWorkspaces } from '@/lib/agentTools'
 import { invoke } from '@tauri-apps/api/core'
@@ -194,7 +191,6 @@ export function DataProvider() {
   // The thread fetch re-runs whenever its effect does (StrictMode remount,
   // a new service hub); the sandbox sweep should run once per session.
   const sweptWorkspaces = useRef(false)
-  const navigate = useNavigate()
   const serviceHub = useServiceHub()
   useExtensionProviders()
 
@@ -231,15 +227,6 @@ export function DataProvider() {
         }
       })
     })
-    // Re-seed the Hugging Face token from the keyring (no longer persisted to
-    // settings storage) into the store for this session.
-    invoke<string | null>('get_secret', {
-      key: HUGGINGFACE_TOKEN_SECRET_KEY,
-    })
-      .then((token) => {
-        if (token) useGeneralSetting.getState().setHuggingfaceToken(token)
-      })
-      .catch(() => {})
     serviceHub
       .mcp()
       .getMCPConfig()
@@ -261,31 +248,6 @@ export function DataProvider() {
       .catch((error) => {
         console.warn('Failed to load assistants, keeping default:', error)
       })
-    serviceHub.deeplink().getCurrent().then(handleDeepLink)
-
-    let unsubscribeOpenUrl = () => {}
-    serviceHub
-      .deeplink()
-      .onOpenUrl(handleDeepLink)
-      .then((unsub) => {
-        unsubscribeOpenUrl = unsub
-      })
-
-    // Listen for deep link events
-    let unsubscribe = () => {}
-    serviceHub
-      .events()
-      .listen(SystemEvent.DEEP_LINK, (event) => {
-        const deep_link = event.payload as string
-        handleDeepLink([deep_link])
-      })
-      .then((unsub) => {
-        unsubscribe = unsub
-      })
-    return () => {
-      unsubscribeOpenUrl()
-      unsubscribe()
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serviceHub])
 
@@ -505,28 +467,6 @@ export function DataProvider() {
       })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serviceHub])
-
-  const handleDeepLink = (urls: string[] | null) => {
-    if (!urls) return
-    console.log('Received deeplink:', urls)
-    const deeplink = urls[0]
-    if (deeplink) {
-      const url = new URL(deeplink)
-      const params = url.pathname.split('/').filter((str) => str.length > 0)
-
-      if (params.length < 3) return undefined
-      // const action = params[0]
-      // const provider = params[1]
-      const resource = params.slice(1).join('/')
-      // return { action, provider, resource }
-      navigate({
-        to: route.hub.model,
-        search: {
-          repo: resource,
-        },
-      })
-    }
-  }
 
   return null
 }

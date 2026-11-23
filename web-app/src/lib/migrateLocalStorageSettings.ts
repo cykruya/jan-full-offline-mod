@@ -1,7 +1,6 @@
 import { isPlatformTauri } from '@/lib/platform/utils'
 import { getServiceHub } from '@/hooks/useServiceHub'
 import { localStorageKey } from '@/constants/localStorage'
-import { HUGGINGFACE_TOKEN_SECRET_KEY } from '@janhq/core'
 import type { Invoke } from '@/lib/migrateCoworkSessions'
 
 /**
@@ -26,12 +25,9 @@ const MIGRATED_KEYS: string[] = [
   localStorageKey.settingLocalApiServer,
   localStorageKey.toolApproval,
   localStorageKey.toolAvailability,
-  localStorageKey.pausedDownloads,
   localStorageKey.settingProxyConfig,
   localStorageKey.settingVulkan,
   localStorageKey.favoriteModels,
-  localStorageKey.latestJanModel,
-  localStorageKey.janModelPromptDismissed,
   localStorageKey.defaultEmbeddingModel,
   localStorageKey.agentMode,
 ]
@@ -122,22 +118,10 @@ async function transformModelProviderBlob(
   return JSON.stringify(parsed)
 }
 
-// Move the HF token into the keyring, then strip it from the blob.
-async function transformGeneralBlob(
-  raw: string,
-  invoke: Invoke
-): Promise<string> {
+// Strip the HF token an older build kept here; nothing uses it any more.
+function transformGeneralBlob(raw: string): string {
   const parsed = JSON.parse(raw)
   const state = getStateSlice(parsed)
-  const token = state && typeof state.huggingfaceToken === 'string'
-    ? (state.huggingfaceToken as string)
-    : ''
-  if (token.trim().length > 0) {
-    await invoke('set_secret', {
-      key: HUGGINGFACE_TOKEN_SECRET_KEY,
-      value: token,
-    })
-  }
   if (state) delete state.huggingfaceToken
   return JSON.stringify(parsed)
 }
@@ -170,7 +154,7 @@ export async function migrateLocalStorageToBackend(): Promise<void> {
       if (key === localStorageKey.modelProvider) {
         value = await transformModelProviderBlob(local, invoke)
       } else if (key === localStorageKey.settingGeneral) {
-        value = await transformGeneralBlob(local, invoke)
+        value = transformGeneralBlob(local)
       }
       await invoke('settings_set', { key, value })
     }

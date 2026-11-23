@@ -12,7 +12,6 @@
   "stop": "Stop",
   "start": "Start",
   "noModelFound": "Kein Modell gefunden",
-  "noModelFoundDesc": "Verfügbare Modelle werden hier aufgelistet. Wenn Du noch keine Modelle hast, können diese im Hub heruntergeladen werden.",
   "configuration": "Konfiguration",
   "apiEndpoint": "API Endpunkt",
   "testConnection": "Teste Verbindung",

@@ -20,13 +20,10 @@ import {
  chatCompletionRequest,
  events,
  AppEvent,
- DownloadEvent,
  ServiceKeys,
- type DownloadService,
  type InternalExtensionContext,
  type LlamacppService,
  type LoopbackFetch,
- type ServiceRegistry,
  chatCompletionRequestMessage,
  SettingComponentProps,
  DropdownComponentProps,
@@ -42,7 +39,6 @@ import { findModelEntries } from './model-tree'
 import { applyLegacyLoadMode, parseLoadMode } from './load-mode'
 
 import {
- getProxyConfig,
  buildEmbedBatches,
  mergeEmbedResponses,
  detectEmbeddingFromGgufMeta,
@@ -95,7 +91,6 @@ import {
  ensureSessionReady as pluginEnsureSessionReady,
  getLoadedModels as pluginGetLoadedModels,
  LlamacppConfig,
- DownloadItem,
  ModelConfig,
  TemplateKwarg,
  EmbeddingResponse,
@@ -179,8 +174,6 @@ type PersistedModelState = {
 
 const MODEL_PROVIDER_STORE_KEY = 'model-provider'
 const EMBEDDER_BOOTSTRAP_KEY = 'llamacpp-embedder-bootstrapped'
-/** Set once the user has agreed to the first-run download. */
-const SETUP_CONSENT_KEY = 'llamacpp-first-run-setup-started'
 const FALLBACK_EMBEDDING_MODEL_ID = 'sentence-transformer-mini'
 /** Its copy in the app's `resources/models` folder (scripts/download-bin.mjs). */
 const FALLBACK_EMBEDDING_MODEL_FILE = 'sentence-transformer-mini.gguf'
@@ -394,8 +387,9 @@ async function readPersistedLlamacppModels(): Promise<PersistedModelState[]> {
 // <Jan's data folder>/llamacpp
 //  - models/<modelId>/
 //    - model.yml (required)
-//    - model.gguf (optional, present if downloaded from URL)
-//    - mmproj.gguf (optional, present if mmproj exists and it was downloaded from URL)
+//    - model.gguf (optional, present for a model the app carries or an older
+//      build downloaded; an imported file stays where it is)
+//    - mmproj.gguf (optional, present if an older build downloaded one)
 // Contents of model.yml can be found in ModelConfig interface
 //
 //  - backends/<backend_version>/<backend_type>/
@@ -413,10 +407,7 @@ const PACKAGE_NAME = '@janhq/llamacpp-extension'
  * manager and publishes the runtime queries the app makes of it.
  */
 export async function activate(ctx: InternalExtensionContext): Promise<void> {
- const engine = new llamacpp_extension(
-  ctx.internal.services,
-  ctx.internal.loopbackFetch
- )
+ const engine = new llamacpp_extension(ctx.internal.loopbackFetch)
  ctx.subscriptions.add(ctx.internal.engines.register(engine))
  ctx.subscriptions.add({ dispose: () => engine.dispose() })
  const service: LlamacppService = {
@@ -442,17 +433,16 @@ export default class llamacpp_extension extends AIEngine implements EmbeddingEng
  private config: LlamacppConfig
  private providerPath!: string
  private apiSecret: string = 'JustAskNow'
- private pendingDownloads: Map<string, Promise<void>> = new Map()
- /** Keyed by modelId; two imports of one model would cancel each other. */
+ /** Keyed by modelId; two imports of one model would collide. */
  private pendingImports: Map<string, Promise<void>> = new Map()
  private embedderBootstrapError?: string
  /**
-  * True while the fallback embedder is being fetched.
+  * True while the fallback embedder is being installed.
   *
   * The old readiness gate keyed off "no backend selected yet", which happened
   * to cover this window on a fresh install. The engine ships with the app now,
   * so that proxy is gone and this is the direct signal -- without it, a normal
-  * first-run download is reported as a failed embedding check.
+  * first-run install is reported as a failed embedding check.
   */
  private embedderBootstrapping = false
  private loadingModels = new Map<string, Promise<SessionInfo>>() // Track loading promises
@@ -479,7 +469,6 @@ export default class llamacpp_extension extends AIEngine implements EmbeddingEng
  private provisioning?: Promise<void>
 
  constructor(
-  private readonly services: Pick<ServiceRegistry, 'get'>,
   // Requests to the engine on loopback go through the host's proxy-bypassing
   // client; see LoopbackFetch.
   private readonly loopbackFetch: LoopbackFetch
@@ -531,34 +520,13 @@ export default class llamacpp_extension extends AIEngine implements EmbeddingEng
   await this.migrateSeededCtxSize()
 
   // Deferred off onLoad so the UI unblocks; performLoad awaits it via
-  // ensureEngineReady(). The engine is bundled with the app now, so there is
-  // no backend catalog fetch and no hundreds-of-megabytes download to ask
-  // consent for -- only the fallback embedder, which bootstrapDefaultEmbedder
-  // still gates on setup consent.
+  // ensureEngineReady(). The engine and the fallback embedder are bundled with
+  // the app, so nothing here fetches anything or needs consent for it.
   this.backgroundInit = this.ensureProvisioned()
  }
 
- private async hasSetupConsent(): Promise<boolean> {
-  try {
-   return Boolean(await getBackendSetting(SETUP_CONSENT_KEY))
-  } catch (e) {
-   // A readable answer is not worth blocking startup over; erring towards
-   // "not consented" only defers work the user can still trigger.
-   logger.warn('Could not read the first-run setup flag:', e)
-   return false
-  }
- }
-
- /**
-  * Runs the first-run provisioning the setup screen asked for, and remembers
-  * that it was asked so a later launch does not wait again.
-  */
+ /** Runs the first-run provisioning the setup screen asked for. */
  async startFirstRunSetup(): Promise<void> {
-  try {
-   await setBackendSetting(SETUP_CONSENT_KEY, 'true')
-  } catch (e) {
-   logger.warn('Could not persist the first-run setup flag:', e)
-  }
   await this.ensureProvisioned()
  }
 
@@ -589,22 +557,22 @@ export default class llamacpp_extension extends AIEngine implements EmbeddingEng
   * One-shot startup install of the fallback embedder so the router reserves
   * the +1 embedding slot from its first start instead of importing the model
   * mid-session on the first RAG call. Runs after the router is up so the
-  * download never delays chat availability; the import's preset refresh then
+  * install never delays chat availability; the import's preset refresh then
   * resizes models_max via an idle restart (nothing is loaded yet at startup).
   * The persisted flag keeps this from resurrecting a model the user deleted,
-  * and is only set on success so a failed download retries next launch.
+  * and is only set on success so a failed install retries next launch.
   */
  private async bootstrapDefaultEmbedder(): Promise<void> {
   try {
    if (await getBackendSetting(EMBEDDER_BOOTSTRAP_KEY)) return
    if (!(await this.hasEmbedderInstalled())) {
-    // Set only around the actual fetch, and only when there is one to do:
-    // an install that is already present must not flash a pending state.
+    // Set only around the actual install, and only when there is one to do:
+    // an embedder that is already present must not flash a pending state.
     this.embedderBootstrapping = true
     await this.importFallbackEmbedder()
-    // A stopped or cancelled download resolves without throwing, so the
-    // install has to be confirmed before the one-shot flag is recorded --
-    // otherwise bootstrap marks itself done and never retries.
+    // The install is confirmed by re-listing before the one-shot flag is
+    // recorded -- otherwise a bootstrap that installed nothing marks itself
+    // done and never retries.
     if (!(await this.hasEmbedderInstalled())) {
      throw new Error(
       `Import of "${FALLBACK_EMBEDDING_MODEL_ID}" did not complete`
@@ -624,20 +592,30 @@ export default class llamacpp_extension extends AIEngine implements EmbeddingEng
    )
   } finally {
    // In `finally` so a thrown import cannot leave the checklist reporting
-   // "downloading" for the rest of the session.
+   // "installing" for the rest of the session.
    this.embedderBootstrapping = false
   }
  }
 
  /**
   * Installs the fallback embedder from the copy shipped with the app. The file
-  * goes where a download used to save it, so `model.yml` names a path inside
-  * the data folder and keeps working when the app is installed elsewhere.
+  * goes into the model's own folder, so `model.yml` names a path inside the
+  * data folder and keeps working when the app is installed elsewhere.
+  *
+  * Single-flight with `import`, copy included: the startup bootstrap and an
+  * on-demand embed can both ask, and two copies to one file would collide.
   */
- private async importFallbackEmbedder(): Promise<void> {
+ private importFallbackEmbedder(): Promise<void> {
+  const inFlight = this.pendingImports.get(FALLBACK_EMBEDDING_MODEL_ID)
+  if (inFlight) return inFlight
+
   const modelPath = `${this.providerId}/models/${FALLBACK_EMBEDDING_MODEL_ID}/model.gguf`
-  await fs.copyBundledModel(FALLBACK_EMBEDDING_MODEL_FILE, modelPath)
-  await this.import(FALLBACK_EMBEDDING_MODEL_ID, { modelPath })
+  const task = (async () => {
+   await fs.copyBundledModel(FALLBACK_EMBEDDING_MODEL_FILE, modelPath)
+   await this.runImport(FALLBACK_EMBEDDING_MODEL_ID, { modelPath })
+  })().finally(() => this.pendingImports.delete(FALLBACK_EMBEDDING_MODEL_ID))
+  this.pendingImports.set(FALLBACK_EMBEDDING_MODEL_ID, task)
+  return task
  }
 
  private async hasEmbedderInstalled(): Promise<boolean> {
@@ -686,11 +664,11 @@ export default class llamacpp_extension extends AIEngine implements EmbeddingEng
 
  /**
   * Proves the embedding model can actually produce a usable vector, rather
-  * than inferring health from a completed download. Never throws: setup
+  * than inferring health from a completed install. Never throws: setup
   * reports the problem and lets the user continue.
   */
  async verifyEmbeddingModel(): Promise<EmbeddingModelReport> {
-  // Downloading it is not a defect. Probing mid-download would fail on a
+  // Installing it is not a defect. Probing mid-install would fail on a
   // model that is simply not there yet and report a warning for it.
   if (this.embedderBootstrapping) {
    return { status: 'ok', pending: true }
@@ -1894,10 +1872,8 @@ export default class llamacpp_extension extends AIEngine implements EmbeddingEng
  /**
   * Joins concurrent imports of the same model instead of starting a second one.
   * Two callers racing (startup embedder bootstrap and an on-demand embed) both
-  * passed the `model.yml` existence guard, then registered the same download
-  * task id -- which Rust resolves by cancelling the first and deleting its
-  * partial file. The loser then returned without writing `model.yml`, so its
-  * caller went on to load a model that was never installed.
+  * passed the `model.yml` existence guard, and the loser then failed on a model
+  * the winner had just installed.
   */
  override async import(modelId: string, opts: ImportOptions): Promise<void> {
   const inFlight = this.pendingImports.get(modelId)
@@ -1940,127 +1916,22 @@ export default class llamacpp_extension extends AIEngine implements EmbeddingEng
   // this is relative to Jan's data folder
   const modelDir = `${this.providerId}/models/${modelId}`
 
-  // we only use these from opts
-  // opts.modelPath: URL to the model file
-  // opts.mmprojPath: URL to the mmproj file
-
-  let downloadItems: DownloadItem[] = []
-
-  const maybeDownload = async (path: string, saveName: string) => {
-   // if URL, add to downloadItems, and return local path
-   if (path.startsWith('https://')) {
-    const localPath = `${modelDir}/${saveName}`
-    downloadItems.push({
-     url: path,
-     save_path: localPath,
-     proxy: await getProxyConfig(),
-     sha256:
-      saveName === 'model.gguf'
-       ? opts.modelSha256
-       : saveName === 'mmproj.gguf'
-        ? opts.mmprojSha256
-        : undefined,
-     size:
-      saveName === 'model.gguf'
-       ? opts.modelSize
-       : saveName === 'mmproj.gguf'
-        ? opts.mmprojSize
-        : undefined,
-     model_id: modelId,
-    })
-    return localPath
-   }
-
-   // if local file (absolute path), check if it exists
-   // and return the path
+  // Every path in opts names a file already on this machine: absolute, or
+  // relative to Jan's data folder.
+  const requireFile = async (path: string) => {
    if (!(await fs.existsSync(path)))
     throw new Error(`File not found: ${path}`)
    return path
   }
 
-  let modelPath = await maybeDownload(opts.modelPath, 'model.gguf')
+  let modelPath = await requireFile(opts.modelPath)
   let mmprojPath = opts.mmprojPath
-   ? await maybeDownload(opts.mmprojPath, 'mmproj.gguf')
+   ? await requireFile(opts.mmprojPath)
    : undefined
-  // Speculative-decoding draft companion; paired with the main model. The
-  // file name stays `mtp.gguf` for every flavour: it is the local name of
-  // the paired draft, and changing it would orphan existing installs.
+  // Speculative-decoding draft companion; paired with the main model.
   let draftModelPath = opts.specDraftPath
-   ? await maybeDownload(opts.specDraftPath, 'mtp.gguf')
+   ? await requireFile(opts.specDraftPath)
    : undefined
-
-  if (downloadItems.length > 0) {
-   try {
-    // emit download update event on progress
-    const onProgress = (transferred: number, total: number) => {
-     events.emit(DownloadEvent.onFileDownloadUpdate, {
-      modelId,
-      percent: transferred / total,
-      size: { transferred, total },
-      downloadType: 'Model',
-     })
-    }
-    await this.downloads().downloadFiles(
-     downloadItems,
-     this.createDownloadTaskId(modelId),
-     onProgress
-    )
-   } catch (error) {
-    const errorMessage =
-     error instanceof Error ? error.message : String(error)
-
-    // Check if this is a cancellation
-    const isCancellationError =
-     errorMessage.includes('Download cancelled') ||
-     errorMessage.includes('Validation cancelled') ||
-     errorMessage.includes('Hash computation cancelled') ||
-     errorMessage.includes('cancelled') ||
-     errorMessage.includes('aborted')
-
-    // Check if this is a validation failure
-    const isValidationError =
-     errorMessage.includes('Hash verification failed') ||
-     errorMessage.includes('Size verification failed') ||
-     errorMessage.includes('Failed to verify file')
-
-    // Pause and cancel both surface here as a cancellation; treat as a
-    // stop (emit stopped, return) so it never becomes an error toast.
-    if (isCancellationError) {
-     logger.info('Download stopped for model:', modelId)
-     events.emit(DownloadEvent.onFileDownloadStopped, {
-      modelId,
-      downloadType: 'Model',
-     })
-     return
-    }
-
-    logger.error('Error downloading model:', modelId, opts, error)
-    if (isValidationError) {
-     // Cancel any other download tasks for this model
-     try {
-      this.abortImport(modelId)
-     } catch (cancelError) {
-      logger.warn('Failed to cancel download task:', cancelError)
-     }
-
-     // Emit validation failure event
-     events.emit(DownloadEvent.onModelValidationFailed, {
-      modelId,
-      downloadType: 'Model',
-      error: errorMessage,
-      reason: 'validation_failed',
-     })
-    } else {
-     // Regular download error
-     events.emit(DownloadEvent.onFileDownloadError, {
-      modelId,
-      downloadType: 'Model',
-      error: errorMessage,
-     })
-    }
-    throw error
-   }
-  }
 
   // Validate GGUF files
   const janDataFolderPath = await getJanDataFolderPath()
@@ -2156,10 +2027,6 @@ export default class llamacpp_extension extends AIEngine implements EmbeddingEng
    mmproj_path: mmprojPath,
    name: resolvedName,
    size_bytes,
-   model_sha256: opts.modelSha256,
-   model_size_bytes: opts.modelSize,
-   mmproj_sha256: opts.mmprojSha256,
-   mmproj_size_bytes: opts.mmprojSize,
    embedding: isEmbedding,
    embedding_check_v: EMBEDDING_CHECK_VERSION,
    mtp_layers: mtpLayers,
@@ -2168,7 +2035,7 @@ export default class llamacpp_extension extends AIEngine implements EmbeddingEng
    expert_check_v: EXPERT_CHECK_VERSION,
    template_kwargs: templateKwargs,
    template_kwargs_check_v: TEMPLATE_KWARGS_CHECK_VERSION,
-   // A separate draft gguf is downloaded only to be used, so enable it by
+   // A separate draft gguf is imported only to be used, so enable it by
    // default. Embedded-MTP models stay opt-in (no flag written here) and
    // need no spec_type: their flavour is always draft-mtp.
    ...(draftModelPath
@@ -2189,66 +2056,14 @@ export default class llamacpp_extension extends AIEngine implements EmbeddingEng
    modelPath,
    mmprojPath,
    size_bytes,
-   model_sha256: opts.modelSha256,
-   model_size_bytes: opts.modelSize,
-   mmproj_sha256: opts.mmprojSha256,
-   mmproj_size_bytes: opts.mmprojSize,
    embedding: isEmbedding,
   })
-
-  if (downloadItems.length > 0) {
-   events.emit(DownloadEvent.onFileDownloadAndVerificationSuccess, {
-    modelId,
-    downloadType: 'Model',
-   })
-  }
 
   try {
    await this.refreshEnginePreset()
   } catch (e) {
    logger.warn(`Router refresh after import(${modelId}) failed:`, e)
   }
- }
-
- /**
-  * Deletes the entire model folder for a given modelId
-  * @param modelId The model ID to delete
-  */
- private async deleteModelFolder(modelId: string): Promise<void> {
-  try {
-   const modelDir = await joinPath([
-    await this.getProviderPath(),
-    'models',
-    modelId,
-   ])
-
-   if (await fs.existsSync(modelDir)) {
-    logger.info(`Cleaning up model directory: ${modelDir}`)
-    await fs.rm(modelDir)
-   }
-  } catch (deleteError) {
-   logger.warn('Failed to delete model directory:', deleteError)
-  }
- }
-
- override async abortImport(modelId: string): Promise<void> {
-  // Cancel any active download task
-  // prepend provider name to avoid name collision
-  const taskId = this.createDownloadTaskId(modelId)
-  try {
-   await this.downloads().cancelDownload(taskId)
-  } catch (cancelError) {
-   logger.warn('Failed to cancel download task:', cancelError)
-  }
-
-  // Delete the entire model folder if it exists (for validation failures)
-  await this.deleteModelFolder(modelId)
- }
-
- override async pauseImport(modelId: string): Promise<void> {
-  const taskId = this.createDownloadTaskId(modelId)
-  // Pause keeps the partial .tmp for resume; the model folder is preserved.
-  await this.downloads().pauseDownload(taskId)
  }
 
  private async getRandomPort(): Promise<number> {
@@ -2409,24 +2224,6 @@ export default class llamacpp_extension extends AIEngine implements EmbeddingEng
     error: `Failed to unload model: ${error}`,
    }
   }
- }
-
- private downloads(): DownloadService {
-  const service = this.services.get(ServiceKeys.Downloads)
-  if (!service) throw new Error('Downloads service is not available')
-  return service
- }
-
- /**
-  * The id becomes a Tauri event name (`download-<taskId>`), which cannot contain
-  * a dot. Dots are replaced rather than truncated at: truncating collapsed every
-  * `Jan-v3.*` quant onto one id, and Rust cancels an in-flight task whose id
-  * repeats -- deleting its partial file -- so downloading one quant destroyed
-  * another's, and pause/cancel hit whichever quant happened to be registered.
-  */
- private createDownloadTaskId(modelId: string) {
-  // prepend provider to make taskId unique across providers
-  return `${this.provider}/${modelId.replace(/\./g, '-')}`
  }
 
  private async *handleStreamingResponse(
@@ -3214,7 +3011,7 @@ export default class llamacpp_extension extends AIEngine implements EmbeddingEng
  }
 
  /**
-  * Check the support status of a model by its path (local/remote)
+  * Check the support status of a model by its path
   *
   * Returns:
   * - "RED"    → weights don't fit in total memory

@@ -232,8 +232,6 @@
     "keepModelsAndConfigsDesc": "Downloaded models, engine settings, and MCP configurations will be preserved.",
     "cancel": "취소",
     "reset": "재설정",
-    "huggingfaceToken": "HuggingFace 토큰",
-    "huggingfaceTokenDesc": "모델에 액세스하기 위한 HuggingFace API 토큰입니다.",
     "resources": "리소스",
     "documentation": "문서",
     "documentationDesc": "Jan 사용법을 알아보고 기능을 탐색해 보세요.",

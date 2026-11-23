@@ -21,7 +21,6 @@
   "chats": "Conversas",
   "favorites": "Favoritos",
   "recents": "Recentes",
-  "hub": "Hub",
   "helpSupport": "Ajuda e Suporte",
   "unstarAll": "Remover todos os favoritos",
   "unstar": "Remover Favorito",
@@ -72,12 +71,7 @@
   "noResultsFound": "Nenhum resultado encontrado",
   "noThreadsYet": "Nenhuma conversa ainda",
   "noThreadsYetDesc": "Inicie uma nova conversa para ver seu histórico de conversas aqui.",
-  "downloads": "Downloads",
-  "downloading": "Baixando",
   "uploadingAttachments": "Enviando anexos…",
-  "cancelDownload": "Cancelar download",
-  "downloadCancelled": "Download Cancelado",
-  "downloadComplete": "Download Concluído",
   "thinking": "Pensando...",
   "thought": "Pensamento",
   "callingTool": "Chamando ferramenta",
@@ -341,30 +335,6 @@
     "appUpdateDownloadFailed": {
       "title": "Falha no Download da Atualização do App",
       "description": "Falha ao baixar a atualização do app. Tente novamente."
-    },
-    "downloadComplete": {
-      "title": "Download Concluído",
-      "description": " {{item}} foi baixado"
-    },
-    "downloadCancelled": {
-      "title": "Download Cancelado",
-      "description": "O processo de download foi cancelado"
-    },
-    "downloadFailed": {
-      "title": "Falha no Download",
-      "description": "Falha no download de {{item}}"
-    },
-    "modelValidationStarted": {
-      "title": "Validando Modelo",
-      "description": "Modelo \"{{modelId}}\" baixado com sucesso. Verificando integridade..."
-    },
-    "modelValidationFailed": {
-      "title": "Falha na Validação do Modelo",
-      "description": "O modelo baixado \"{{modelId}}\" falhou na verificação de integridade e foi removido. O arquivo pode estar corrompido ou adulterado."
-    },
-    "downloadAndVerificationComplete": {
-      "title": "Download Concluído",
-      "description": "Modelo \"{{item}}\" baixado e verificado com sucesso"
     },
     "projectCreated": {
       "title": "Projeto Criado",

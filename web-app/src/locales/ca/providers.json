@@ -12,7 +12,6 @@
   "stop": "Atura",
   "start": "Inicia",
   "noModelFound": "No s’ha trobat cap model",
-  "noModelFoundDesc": "Els models disponibles apareixeran aquí. Si encara no en tens cap, visita el Hub per descarregar-ne.",
   "configuration": "Configuració",
   "apiEndpoint": "Extrem de l’API",
   "testConnection": "Prova la connexió",

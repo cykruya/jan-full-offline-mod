@@ -31,7 +31,6 @@
     "websearch:default",
     "agent-tools:default",
     "hardware:default",
-    "deep-link:default",
     "llamacpp:default",
     "updater:default",
     "updater:allow-check",

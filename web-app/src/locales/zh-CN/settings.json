@@ -304,8 +304,6 @@
     "credits": "致谢",
     "creditsDesc1": "👋 Jan by Menlo 团队 用 ❤️ 发电。",
     "creditsDesc2": "特别感谢我们依赖的开源组件——尤其是 llama.cpp 和 Tauri——以及我们出色的 AI 社区。",
-    "huggingfaceToken": "HuggingFace 令牌",
-    "huggingfaceTokenDesc": "您用于访问模型的 HuggingFace API 令牌。",
     "janCli": "Jan CLI",
     "janCliDesc": "在终端中运行 Jan 的智能体。按照指南安装并开始使用。",
     "janCliSetupGuide": "安装指南"

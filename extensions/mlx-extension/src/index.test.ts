@@ -26,13 +26,11 @@ const mockUnload = vi.mocked(unloadMlxModel)
 const mockLoad = vi.mocked(loadMlxModel)
 const mockReadGguf = vi.mocked(readGgufMetadata)
 
-// The host service registry the engine reaches the Downloads service through.
-const hostServices = { get: vi.fn() }
 // The host's proxy-bypassing client (`ctx.internal.loopbackFetch`).
 const loopbackFetch = vi.fn()
 
 function newExt(): any {
-  const ext = new mlx_extension(hostServices, loopbackFetch) as any
+  const ext = new mlx_extension(loopbackFetch) as any
   ext.providerPath = '/data/mlx'
   return ext
 }
@@ -44,7 +42,7 @@ beforeEach(() => {
 
 describe('getProviderPath', () => {
   it('joins the jan data folder with the mlx dir and caches it', async () => {
-    const ext = new mlx_extension(hostServices, loopbackFetch) as any
+    const ext = new mlx_extension(loopbackFetch) as any
     const path = await ext.getProviderPath()
     expect(path).toBe('/data/mlx')
 
@@ -130,7 +128,7 @@ describe('getModelProps after a load', () => {
 
 describe('getModelContextLimit', () => {
   it('uses the text model limit from a multimodal config', async () => {
-    const ext = new mlx_extension(hostServices, loopbackFetch)
+    const ext = new mlx_extension(loopbackFetch)
     mockReadYaml.mockResolvedValueOnce({ model_path: '/external/model' })
     mockFileStat.mockResolvedValue({ isDirectory: true } as never)
     mockReadFileSync.mockResolvedValueOnce(JSON.stringify({
@@ -143,7 +141,7 @@ describe('getModelContextLimit', () => {
   })
 
   it('does not assume a context limit when the config omits it', async () => {
-    const ext = new mlx_extension(hostServices, loopbackFetch)
+    const ext = new mlx_extension(loopbackFetch)
     mockReadYaml.mockResolvedValueOnce({ model_path: '/external/model' })
     mockFileStat.mockResolvedValue({ isDirectory: true } as never)
     mockReadFileSync.mockResolvedValueOnce('{}')
@@ -455,37 +453,6 @@ describe('update', () => {
   })
 })
 
-describe('pauseImport / abortImport', () => {
-  const downloads = () => ({
-    pauseDownload: vi.fn().mockResolvedValue(undefined),
-    cancelDownload: vi.fn().mockResolvedValue(undefined),
-  })
-
-  it('pauses the task through the host Downloads service', async () => {
-    const service = downloads()
-    const getService = vi.fn().mockReturnValue(service)
-    hostServices.get = getService
-    await newExt().pauseImport('m1')
-    expect(getService).toHaveBeenCalledWith(ServiceKeys.Downloads)
-    expect(service.pauseDownload).toHaveBeenCalledWith('mlx/m1')
-  })
-
-  it('cancels the task through the host Downloads service', async () => {
-    mockExistsSync.mockResolvedValue(false)
-    const service = downloads()
-    hostServices.get = vi.fn().mockReturnValue(service)
-    await newExt().abortImport('m1')
-    expect(service.cancelDownload).toHaveBeenCalledWith('mlx/m1')
-  })
-
-  it('fails loudly when no Downloads service is provided', async () => {
-    hostServices.get = vi.fn().mockReturnValue(undefined)
-    await expect(newExt().pauseImport('m1')).rejects.toThrow(
-      'Downloads service is not available'
-    )
-  })
-})
-
 describe('activate', () => {
   type Disposable = { dispose(): void }
 
@@ -534,15 +501,6 @@ describe('activate', () => {
     mockFindSession.mockResolvedValueOnce(null)
     await expect(service.findSession('gone')).resolves.toBeNull()
     expect(mockFindSession).toHaveBeenCalledWith('gone')
-  })
-
-  it('reaches the Downloads service through the host registry', async () => {
-    const fake = fakeContext()
-    const downloads = { pauseDownload: vi.fn().mockResolvedValue(undefined) }
-    fake.provided.set(ServiceKeys.Downloads.id, downloads)
-    await activate(fake.ctx)
-    await fake.engines.register.mock.calls[0][0].pauseImport('m1')
-    expect(downloads.pauseDownload).toHaveBeenCalledWith('mlx/m1')
   })
 
   it('unregisters the engine and withdraws the service on deactivation', async () => {

@@ -5,7 +5,6 @@ import { ReactNode, memo } from 'react'
 import { Button } from "@/components/ui/button"
 import { useOptionalSidebar } from '@/components/ui/sidebar'
 import { useTranslation } from '@/i18n/react-i18next-compat'
-import { DownloadManagement } from '@/containers/DownloadManegement'
 import { useTitlebarLayout } from '@/stores/titlebar-layout-store'
 
 type HeaderPageProps = {
@@ -70,8 +69,6 @@ const HeaderPage = memo(function HeaderPage({ children }: HeaderPageProps) {
                 className="text-muted-foreground relative size-4"
               />
             </Button>
-            {/* After the toggle so the toggle stays put when this appears */}
-            <DownloadManagement />
           </>
         )}
         <div

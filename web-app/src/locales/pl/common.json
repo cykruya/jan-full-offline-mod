@@ -22,7 +22,6 @@
   "chats": "Czaty",
   "favorites": "Ulubione",
   "recents": "Ostatnie",
-  "hub": "Centrum Modeli",
   "helpSupport": "Pomoc i Obsługa",
   "unstarAll": "Usuń Wszystkim Gwiazdkę",
   "unstar": "Usuń Gwiazdkę",
@@ -73,12 +72,7 @@
   "noResultsFound": "Brak wyników",
   "noThreadsYet": "Brak wątków",
   "noThreadsYetDesc": "Rozpocznij nową rozmowę aby zobaczyć tutaj historię wątków.",
-  "downloads": "Pobrane",
-  "downloading": "Pobieranie",
   "uploadingAttachments": "Przesyłanie załączników…",
-  "cancelDownload": "Anuluj Pobieranie",
-  "downloadCancelled": "Pobieranie anulowane",
-  "downloadComplete": "Pobieranie zakończone",
   "thinking": "Myślenie…",
   "thought": "Myśl",
   "callingTool": "Używanie narzędzia",
@@ -338,30 +332,6 @@
     "appUpdateDownloadFailed": {
       "title": "Błąd Pobierania Aktualizacji Aplikacji",
       "description": "Nie udało się pobrać aktualizacji aplikacji. Proszę spróbować później."
-    },
-    "downloadComplete": {
-      "title": "Ukończono Pobieranie",
-      "description": "Model {{modelId}} został pobrany."
-    },
-    "downloadCancelled": {
-      "title": "Anulowano Pobieranie",
-      "description": "Pobieranie zostało anulowane."
-    },
-    "downloadFailed": {
-      "title": "Błąd Pobierania",
-      "description": "Błąd pobierania {{item}}"
-    },
-    "modelValidationStarted": {
-      "title": "Weryfikacja Modelu",
-      "description": "Pomyślnie pobrano model \"{{modelId}}\". Weryfikowanie integralności..."
-    },
-    "modelValidationFailed": {
-      "title": "Błąd Weryfikacji Modelu",
-      "description": "Pobrany model \"{{modelId}}\" nie przeszedł weryfikacji integralności i został usunięty. Plik może być uszkodzony lub zmodyfikowany."
-    },
-    "downloadAndVerificationComplete": {
-      "title": "Pobieranie Ukończone",
-      "description": "Model \"{{item}}\" został pobrany i pomyślnie zweryfikowany"
     },
     "projectCreated": {
       "title": "Projekt Utworzony",

@@ -22,7 +22,6 @@
   "stop": "停止",
   "start": "開始",
   "noModelFound": "モデルが見つかりません",
-  "noModelFoundDesc": "利用可能なモデルはここにリストされます。まだモデルがない場合は、ハブにアクセスしてダウンロードしてください。",
   "noModelFoundRemoteDesc": "利用可能なモデルはここにリストされます。上の更新ボタンでプロバイダーからモデルを取得するか、+ボタンで手動で追加してください。",
   "configuration": "設定",
   "apiEndpoint": "APIエンドポイント",

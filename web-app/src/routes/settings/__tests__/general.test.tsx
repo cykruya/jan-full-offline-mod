@@ -61,8 +61,6 @@ vi.mock('@/hooks/useGeneralSetting', () => ({
   useGeneralSetting: () => ({
     spellCheckChatInput: true,
     setSpellCheckChatInput: vi.fn(),
-    huggingfaceToken: 'test-token',
-    setHuggingfaceToken: vi.fn(),
     autoUpdateCheck: true,
     setAutoUpdateCheck: vi.fn(),
   }),
@@ -344,17 +342,6 @@ describe('General Settings Route', () => {
   //   expect(screen.getByTestId('language-switcher')).toBeInTheDocument()
   // })
 
-  it('should render huggingface token input', async () => {
-    const Component = GeneralRoute.component as React.ComponentType
-    await act(async () => {
-      render(<Component />)
-    })
-
-    const input = screen.getByTestId('input')
-    expect(input).toBeInTheDocument()
-    expect(input).toHaveValue('test-token')
-  })
-
   it('should handle spell check toggle', async () => {
     const Component = GeneralRoute.component as React.ComponentType
     await act(async () => {
@@ -369,22 +356,6 @@ describe('General Settings Route', () => {
       fireEvent.click(switches[0])
     })
     expect(switches[0]).toBeInTheDocument()
-  })
-
-  it('should handle huggingface token change', async () => {
-    const Component = GeneralRoute.component as React.ComponentType
-    await act(async () => {
-      render(<Component />)
-    })
-
-    const input = screen.getByTestId('input')
-    expect(input).toBeInTheDocument()
-
-    // Test that input is interactive
-    await act(async () => {
-      fireEvent.change(input, { target: { value: 'new-token' } })
-    })
-    expect(input).toBeInTheDocument()
   })
 
   it('should handle check for updates', async () => {

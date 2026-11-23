@@ -14,7 +14,6 @@ pub mod core;
 #[cfg(not(feature = "cli"))]
 use core::{
     app::commands::get_jan_data_folder_path,
-    downloads::models::DownloadManagerState,
     mcp::models::McpSettings,
     setup::{self, setup_mcp},
     state::AppState,
@@ -140,10 +139,6 @@ macro_rules! invoke_commands_with_extras {
         core::threads::commands::get_thread_assistant,
         core::threads::commands::create_thread_assistant,
         core::threads::commands::modify_thread_assistant,
-        // Download
-        core::downloads::commands::download_files,
-        core::downloads::commands::cancel_download_task,
-        core::downloads::commands::pause_download_task,
         // App lifecycle
         confirm_exit,
         main_window_hides_on_close,
@@ -434,12 +429,11 @@ pub fn run() {
     // WebDriver server ever bound.
     #[cfg(all(desktop, not(feature = "e2e")))]
     let builder = builder.plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
-        println!("a new app instance was opened with {argv:?} and the deep link event was already triggered");
+        println!("a new app instance was opened with {argv:?}");
         // The second process exits right after this runs, so whatever the user
         // expected from launching Jan again has to happen here: bring the
         // running window back, even when it was minimized or hidden to the tray.
         core::system::commands::show_main_window(app);
-        // when defining deep link schemes at runtime, you must also check `argv` here
     }));
 
     let mut app_builder = builder
@@ -458,11 +452,6 @@ pub fn run() {
         .plugin(tauri_plugin_rag::init())
         .plugin(tauri_plugin_websearch::init())
         .plugin(tauri_plugin_agent_tools::init());
-
-    #[cfg(feature = "deep-link")]
-    {
-        app_builder = app_builder.plugin(tauri_plugin_deep_link::init());
-    }
 
     // e2e builds only: the embedded WebDriver server @wdio/tauri-service drives.
     // Gated behind the `e2e` feature so no release binary exposes it.
@@ -507,7 +496,6 @@ pub fn run() {
         .manage(AppState {
             app_token: Some(generate_app_token()),
             mcp_servers: Arc::new(Mutex::new(HashMap::new())),
-            download_manager: Arc::new(Mutex::new(DownloadManagerState::default())),
             mcp_active_servers: Arc::new(Mutex::new(HashMap::new())),
             server_handle: Arc::new(Mutex::new(None)),
             tool_call_cancellations: Arc::new(Mutex::new(HashMap::new())),
@@ -632,23 +620,6 @@ pub fn run() {
             if setup::tray_always_visible() {
                 log::info!("Enabling system tray icon");
                 let _ = setup::setup_tray(app.handle());
-            }
-
-            // Not in e2e builds: on Windows `register_all` writes HKCU
-            // Software\Classes\jan\shell\open\command and points it at the
-            // running exe, so every run would repoint the developer's real
-            // `jan://` handler at target/debug/Jan-Desktop.exe. The registry is
-            // outside everything the harness's env overrides can reach. (On
-            // Linux it writes into `data_dir()/applications`, which XDG_DATA_HOME
-            // does redirect -- but no spec opens a deep link, so skip both.)
-            #[cfg(all(
-                feature = "deep-link",
-                not(feature = "e2e"),
-                any(windows, target_os = "linux")
-            ))]
-            {
-                use tauri_plugin_deep_link::DeepLinkExt;
-                app.deep_link().register_all()?;
             }
 
             // Initialize SQLite database for mobile platforms

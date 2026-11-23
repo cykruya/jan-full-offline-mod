@@ -238,8 +238,6 @@
     "keepModelsAndConfigsDesc": "I modelli scaricati, le impostazioni del motore e le configurazioni MCP verranno preservati.",
     "cancel": "Annulla",
     "reset": "Ripristina",
-    "huggingfaceToken": "Token HuggingFace",
-    "huggingfaceTokenDesc": "Il tuo token API di HuggingFace per accedere ai modelli.",
     "resources": "Risorse",
     "documentation": "Documentazione",
     "documentationDesc": "Scopri come usare Jan ed esplora le sue funzionalità.",

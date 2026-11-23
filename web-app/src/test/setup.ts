@@ -129,12 +129,6 @@ const mockServiceHub = {
     getCoreStatus: vi.fn().mockResolvedValue('stopped'),
   }),
   extensions: () => new DefaultExtensionsService(),
-  deeplink: () => ({ // cspell: disable-line
-    register: vi.fn().mockResolvedValue(undefined),
-    handle: vi.fn().mockResolvedValue(undefined),
-    getCurrent: vi.fn().mockResolvedValue(null),
-    onOpenUrl: vi.fn().mockResolvedValue(undefined),
-  }),
 }
 
 // Mock the useServiceHub module

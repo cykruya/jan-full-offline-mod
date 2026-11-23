@@ -28,7 +28,6 @@
   "chats": "Chat",
   "favorites": "Preferiti",
   "recents": "Recenti",
-  "hub": "Hub",
   "helpSupport": "Aiuto e supporto",
   "unstarAll": "Rimuovi preferiti a tutti",
   "unstar": "Rimuovi dai preferiti",
@@ -85,12 +84,7 @@
   "noResultsFound": "Nessun risultato trovato",
   "noThreadsYet": "Ancora nessuna conversazione",
   "noThreadsYetDesc": "Avvia una nuova conversazione per visualizzare qui la tua cronologia.",
-  "downloads": "Download",
-  "downloading": "Download in corso",
   "uploadingAttachments": "Caricamento allegati in corso…",
-  "cancelDownload": "Annulla download",
-  "downloadCancelled": "Download annullato",
-  "downloadComplete": "Download completato",
   "thinking": "Riflessione in corso...",
   "thought": "Pensiero",
   "callingTool": "Chiamata dello strumento",
@@ -404,30 +398,6 @@
     "appUpdateDownloadFailed": {
       "title": "Download dell'aggiornamento fallito",
       "description": "Impossibile scaricare l'aggiornamento dell'app. Riprova."
-    },
-    "downloadComplete": {
-      "title": "Download completato",
-      "description": "{{item}} è stato scaricato"
-    },
-    "downloadCancelled": {
-      "title": "Download annullato",
-      "description": "Il processo di download è stato annullato"
-    },
-    "downloadFailed": {
-      "title": "Download fallito",
-      "description": "Download di {{item}} non riuscito"
-    },
-    "modelValidationStarted": {
-      "title": "Validazione del modello",
-      "description": "Scaricato"
-    },
-    "modelValidationFailed": {
-      "title": "Validazione del modello fallita",
-      "description": "Il modello scaricato \"{{modelId}}\" non ha superato la verifica di integrità ed è stato rimosso. Il file potrebbe essere corrotto o manomesso."
-    },
-    "downloadAndVerificationComplete": {
-      "title": "Download completato",
-      "description": "Modello \"{{item}}\" scaricato e verificato con successo"
     },
     "projectCreated": {
       "title": "Progetto creato",

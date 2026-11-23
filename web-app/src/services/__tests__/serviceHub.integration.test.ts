@@ -65,10 +65,6 @@ vi.mock('../window/web', () => ({
   WebWindowService: vi.fn().mockImplementation(() => ({}))
 }))
 
-vi.mock('../deeplink/web', () => ({
-  WebDeepLinkService: vi.fn().mockImplementation(() => ({}))
-}))
-
 vi.mock('../providers/web', () => ({
   WebProvidersService: vi.fn().mockImplementation(() => ({}))
 }))
@@ -128,10 +124,6 @@ vi.mock('../core/tauri', () => ({
   TauriCoreService: vi.fn().mockImplementation(() => ({}))
 }))
 
-vi.mock('../deeplink/tauri', () => ({
-  TauriDeepLinkService: vi.fn().mockImplementation(() => ({}))
-}))
-
 // Mock console to avoid noise in tests
 vi.spyOn(console, 'log').mockImplementation(() => {})
 vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -173,9 +165,9 @@ describe('ServiceHub Integration Tests', () => {
   describe('Service Access', () => {
     it('should provide access to all required services', () => {
       const services = [
-        'theme', 'window', 'events', 'hardware', 'app', 'analytic',
+        'theme', 'window', 'events', 'hardware', 'app',
         'messages', 'mcp', 'threads', 'providers', 'models', 'assistants',
-        'dialog', 'opener', 'updater', 'path', 'core', 'deeplink'
+        'dialog', 'opener', 'updater', 'path', 'core'
       ]
 
       services.forEach(serviceName => {

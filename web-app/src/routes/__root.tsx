@@ -14,7 +14,6 @@ import OutOfContextPromiseModal from '@/containers/dialogs/OutOfContextDialog'
 import AttachmentIngestionDialog from '@/containers/dialogs/AttachmentIngestionDialog'
 import GlobalError from '@/containers/GlobalError'
 import { GlobalEventHandler } from '@/providers/GlobalEventHandler'
-import { DownloadEventListener } from '@/providers/DownloadEventListener'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { LeftSidebar } from '@/components/left-sidebar'
 import { WindowControls } from '@/components/WindowControls'
@@ -108,7 +107,6 @@ function RootLayout() {
       <ToasterProvider />
       <DataProvider />
       <GlobalEventHandler />
-      <DownloadEventListener />
       {IS_LOGS_ROUTE ? <LogsLayout /> : <AppLayout />}
       {/* <TanStackRouterDevtools position="bottom-right" /> */}
       <AttachmentIngestionDialog />

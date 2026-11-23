@@ -2,10 +2,8 @@ pub mod agent;
 pub mod app;
 #[cfg(feature = "cli")]
 pub mod cli;
-// Download manager, native file dialogs/IO commands, and the system/tray
-// command surface are desktop-only; the CLI uses std::fs and its own tools.
-#[cfg(not(feature = "cli"))]
-pub mod downloads;
+// Native file dialogs/IO commands and the system/tray command surface are
+// desktop-only; the CLI uses std::fs and its own tools.
 #[cfg(not(feature = "cli"))]
 pub mod filesystem;
 pub mod mcp;

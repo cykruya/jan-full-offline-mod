@@ -22,7 +22,6 @@
   "chats": "Chats",
   "favorites": "Favoriten",
   "recents": "Kürzlich",
-  "hub": "Hub",
   "helpSupport": "Hilfe & Support",
   "unstarAll": "Alle De-Favorisieren",
   "unstar": "De-Favorisieren",
@@ -73,12 +72,7 @@
   "noResultsFound": "Keine Ergebnisse gefunden",
   "noThreadsYet": "Keine Threads bisher",
   "noThreadsYetDesc": "Starte eine neue Unterhaltung, um deinen Threadverlauf hier anzuzeigen.",
-  "downloads": "Downloads",
-  "downloading": "Downloading",
   "uploadingAttachments": "Anhänge werden hochgeladen…",
-  "cancelDownload": "Download abbrechen",
-  "downloadCancelled": "Download wurde abgebrochen",
-  "downloadComplete": "Download abgeschlossen",
   "thinking": "Denke nach...",
   "thought": "Gedanke",
   "callingTool": "Rufe Werkzeug auf",
@@ -376,30 +370,6 @@
     "appUpdateDownloadFailed": {
       "title": "App Update Download fehlgeschlagen",
       "description": "Das App-Update konnte nicht heruntergeladen werden. Bitte versuche es noch einmal."
-    },
-    "downloadComplete": {
-      "title": "Download abgeschlossen",
-      "description": "{{item}} wurde heruntergeladen"
-    },
-    "downloadCancelled": {
-      "title": "Download abgebrochen",
-      "description": "Der Download-Prozess wurde abgebrochen"
-    },
-    "downloadFailed": {
-      "title": "Download fehlgeschlagen",
-      "description": "{{item}} Download fehlgeschlagen"
-    },
-    "modelValidationStarted": {
-      "title": "Modell wird validiert",
-      "description": "Modell \"{{modelId}}\" erfolgreich heruntergeladen. Integrität wird überprüft..."
-    },
-    "modelValidationFailed": {
-      "title": "Modellvalidierung fehlgeschlagen",
-      "description": "Das heruntergeladene Modell \"{{modelId}}\" ist bei der Integritätsprüfung fehlgeschlagen und wurde entfernt. Die Datei könnte beschädigt oder manipuliert worden sein."
-    },
-    "downloadAndVerificationComplete": {
-      "title": "Download abgeschlossen",
-      "description": "Modell \"{{item}}\" erfolgreich heruntergeladen und verifiziert"
     },
     "deleteAllChats": {
       "title": "Unterhaltungen gelöscht",

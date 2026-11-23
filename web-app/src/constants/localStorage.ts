@@ -4,7 +4,6 @@ export const localStorageKey = {
   messages: 'messages',
   theme: 'theme',
   modelProvider: 'model-provider',
-  modelSources: 'model-sources',
   settingInterface: 'setting-appearance',
   settingGeneral: 'setting-general',
   settingCodeBlock: 'setting-code-block',
@@ -23,18 +22,11 @@ export const localStorageKey = {
   lastUsedAssistant: 'last-used-assistant',
   defaultAssistantId: 'default-assistant-id',
   favoriteModels: 'favorite-models',
-  setupCompleted: 'setup-completed',
   threadManagement: 'thread-management',
-  modelSupportCache: 'jan_model_support_cache',
   recentSearches: 'recent-searches',
-  janModelPromptDismissed: 'jan-model-prompt-dismissed',
   agentMode: 'agent-mode',
-  latestJanModel: 'latest-jan-model',
   defaultEmbeddingModel: 'default-embedding-model',
-  pausedDownloads: 'paused-downloads',
   // Value predates the Cowork rename; changing it would orphan saved sessions.
   coworkSessions: 'code-sessions',
   cotDuration: 'cot-duration',
 }
-
-export const CACHE_EXPIRY_MS = 1000 * 60 * 60 * 24

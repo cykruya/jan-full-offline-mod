@@ -23,10 +23,6 @@ export const PlatformFeatures: Record<PlatformFeature, boolean> = {
   [PlatformFeature.LOCAL_API_SERVER]:
     isPlatformTauri() && !isPlatformIOS() && !isPlatformAndroid(),
 
-  // Hub/model downloads
-  [PlatformFeature.MODEL_HUB]:
-    isPlatformTauri() && !isPlatformIOS() && !isPlatformAndroid(),
-
   // System integrations (logs, file explorer, etc.)
   [PlatformFeature.SYSTEM_INTEGRATIONS]:
     isPlatformTauri() && !isPlatformIOS() && !isPlatformAndroid(),

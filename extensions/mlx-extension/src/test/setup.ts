@@ -45,7 +45,7 @@ class AIEngineMock {
 }
 
 vi.mock('@janhq/core', () => ({
-  ServiceKeys: { Downloads: { id: 'downloads' }, Mlx: { id: 'mlx' } },
+  ServiceKeys: { Mlx: { id: 'mlx' } },
   logger: {
     debug: vi.fn(),
     info: vi.fn(),

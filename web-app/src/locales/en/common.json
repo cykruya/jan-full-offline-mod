@@ -94,7 +94,6 @@
   "chats": "Chats",
   "favorites": "Favorites",
   "recents": "Recents",
-  "hub": "Hub",
   "helpSupport": "Help & Support",
   "unstarAll": "Unstar All",
   "unstar": "Unstar",
@@ -182,12 +181,7 @@
   "noResultsFound": "No results found",
   "noThreadsYet": "No threads yet",
   "noThreadsYetDesc": "Start a new conversation to see your thread history here.",
-  "downloads": "Downloads",
-  "downloading": "Downloading",
   "uploadingAttachments": "Uploading attachments…",
-  "cancelDownload": "Cancel download",
-  "downloadCancelled": "Download Cancelled",
-  "downloadComplete": "Download Complete",
   "thinking": "Thinking...",
   "thought": "Thought",
   "callingTool": "Calling tool",
@@ -526,53 +520,7 @@
       "title": "App Update Download Failed",
       "description": "Failed to download the app update. Please try again."
     },
-    "downloadComplete": {
-      "title": "Download Complete",
-      "description": "{{item}} has been downloaded"
-    },
-    "downloadCancelled": {
-      "title": "Download Cancelled",
-      "description": "The download process was cancelled"
-    },
-    "downloadFailed": {
-      "title": "Download Failed",
-      "description": "{{item}} download failed",
-      "descriptionWithReason": "{{item}} download failed: {{reason}}",
-      "reason": {
-        "dns": "the server name could not be resolved",
-        "refused": "the connection was refused",
-        "timeout": "the connection timed out",
-        "tls": "a secure connection could not be established",
-        "proxy": "the proxy could not be reached",
-        "unreachable": "the server could not be reached"
-      }
-    },
     "openSettings": "Open Settings",
-    "openLogs": "Open logs",
-    "downloadTokenRequired": {
-      "title": "Hugging Face token required",
-      "description": "This model requires a Hugging Face access token. Add your token in Settings and retry."
-    },
-    "downloadLicenseRequired": {
-      "title": "Accept model license on Hugging Face",
-      "description": "You must accept the model's license on its Hugging Face page before downloading."
-    },
-    "downloadRateLimited": {
-      "title": "Rate limited by Hugging Face",
-      "description": "You have been rate-limited. Adding a token can increase rate limits. Please try again later."
-    },
-    "modelValidationStarted": {
-      "title": "Validating Model",
-      "description": "Downloaded model \"{{modelId}}\" successfully. Verifying integrity..."
-    },
-    "modelValidationFailed": {
-      "title": "Model Validation Failed",
-      "description": "The downloaded model \"{{modelId}}\" failed integrity verification and was removed. The file may be corrupted or tampered with."
-    },
-    "downloadAndVerificationComplete": {
-      "title": "Download Complete",
-      "description": "Model \"{{item}}\" downloaded and verified successfully"
-    },
     "projectCreated": {
       "title": "Project Created",
       "description": "Project \"{{projectName}}\" created successfully"

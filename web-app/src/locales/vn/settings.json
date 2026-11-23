@@ -237,9 +237,7 @@
     "reportIssue": "Báo cáo Vấn đề",
     "credits": "Ghi công",
     "creditsDesc1": "Jan được xây dựng với ❤️ bởi Đội Menlo.",
-    "creditsDesc2": "Cảm ơn đặc biệt đến các phụ thuộc mã nguồn mở của chúng tôi—đặc biệt là llama.cpp và Tauri—và đến cộng đồng AI tuyệt vời của chúng tôi.",
-    "huggingfaceToken": "Token HuggingFace",
-    "huggingfaceTokenDesc": "Token API HuggingFace của bạn để truy cập các mô hình."
+    "creditsDesc2": "Cảm ơn đặc biệt đến các phụ thuộc mã nguồn mở của chúng tôi—đặc biệt là llama.cpp và Tauri—và đến cộng đồng AI tuyệt vời của chúng tôi."
   },
   "extensions": {
     "title": "Tiện ích mở rộng"

@@ -1,6 +1,5 @@
 import { Emitter, toDisposable, type Disposable, type Event } from '@janhq/extension-api'
 import type { AssistantInterface } from '../../types'
-import type { DownloadItem } from '../download'
 import type { SessionInfo, UnloadResult } from '../extensions/engines/AIEngine'
 import type { RAGIngestService, VectorDBService } from './rag'
 
@@ -50,24 +49,6 @@ export function createServiceRegistry(): ServiceRegistry {
 
 export type AssistantService = AssistantInterface
 
-/** File downloads with progress, as the download built-in provides them. */
-export interface DownloadService {
-  downloadFile(
-    url: string,
-    savePath: string,
-    taskId: string,
-    proxyConfig?: DownloadItem['proxy'],
-    onProgress?: (transferred: number, total: number) => void
-  ): Promise<void>
-  downloadFiles(
-    items: DownloadItem[],
-    taskId: string,
-    onProgress?: (transferred: number, total: number) => void
-  ): Promise<void>
-  cancelDownload(taskId: string): Promise<void>
-  pauseDownload(taskId: string): Promise<void>
-}
-
 /** What a local engine reports for a loaded model. */
 export interface LocalModelProps {
   /** The context window the model was launched with. */
@@ -106,7 +87,6 @@ export interface MlxService extends LocalEngineService {
 
 export const ServiceKeys = {
   Assistants: new ServiceKey<AssistantService>('assistants'),
-  Downloads: new ServiceKey<DownloadService>('downloads'),
   Llamacpp: new ServiceKey<LlamacppService>('llamacpp'),
   Mlx: new ServiceKey<MlxService>('mlx'),
   VectorDB: new ServiceKey<VectorDBService>('vector-db'),

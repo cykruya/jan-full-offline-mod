@@ -69,16 +69,6 @@ describe('activate', () => {
     await expect(service.reconcileEngineDevices()).resolves.toBe('busy')
   })
 
-  it('reaches the Downloads service through the host registry', async () => {
-    const fake = fakeContext()
-    const downloads = { pauseDownload: vi.fn().mockResolvedValue(undefined) }
-    fake.provided.set(ServiceKeys.Downloads.id, downloads)
-    await activate(fake.ctx)
-    const engine = fake.engines.register.mock.calls[0][0] as llamacpp_extension
-    await engine.pauseImport('m1')
-    expect(downloads.pauseDownload).toHaveBeenCalledWith('llamacpp/m1')
-  })
-
   it('unregisters the engine and withdraws the service on deactivation', async () => {
     const fake = fakeContext()
     await activate(fake.ctx)

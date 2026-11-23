@@ -12,7 +12,6 @@
   "stop": "Dừng",
   "start": "Bắt đầu",
   "noModelFound": "Không tìm thấy mô hình nào",
-  "noModelFoundDesc": "Các mô hình có sẵn sẽ được liệt kê ở đây. Nếu bạn chưa có bất kỳ mô hình nào, hãy truy cập Hub để tải xuống.",
   "configuration": "Cấu hình",
   "apiEndpoint": "Điểm cuối API",
   "testConnection": "Kiểm tra kết nối",

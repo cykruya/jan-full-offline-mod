@@ -111,10 +111,6 @@ describe('ImportLlamacppModelDialog', () => {
         'ok.gguf',
         '/tmp/ok.gguf',
         undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
         '/tmp/draft.gguf'
       )
     )
@@ -315,10 +311,6 @@ describe('ImportLlamacppModelDialog', () => {
       expect(hoisted.pullModel).toHaveBeenCalledWith(
         'ok.gguf',
         '/tmp/ok.gguf',
-        undefined,
-        undefined,
-        undefined,
-        undefined,
         undefined,
         undefined
       )

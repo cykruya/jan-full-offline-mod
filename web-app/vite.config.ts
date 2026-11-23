@@ -29,7 +29,6 @@ export default defineConfig(({ mode }) => {
       alias: {
         '@': path.resolve(__dirname, './src'),
         '@janhq/assistant-extension': path.resolve(__dirname, '../extensions/assistant-extension/dist/index.js'),
-        '@janhq/download-extension': path.resolve(__dirname, '../extensions/download-extension/dist/index.js'),
         '@janhq/llamacpp-extension': path.resolve(__dirname, '../extensions/llamacpp-extension/dist/index.js'),
         '@janhq/mlx-extension': path.resolve(__dirname, '../extensions/mlx-extension/dist/index.js'),
         '@janhq/rag-extension': path.resolve(__dirname, '../extensions/rag-extension/dist/index.js'),
@@ -43,7 +42,6 @@ export default defineConfig(({ mode }) => {
       // hub and surfaces as "Importing a module script failed" on cold start.
       exclude: [
         '@janhq/assistant-extension',
-        '@janhq/download-extension',
         '@janhq/llamacpp-extension',
         '@janhq/mlx-extension',
         '@janhq/rag-extension',
@@ -73,12 +71,6 @@ export default defineConfig(({ mode }) => {
 
       VERSION: JSON.stringify(packageJson.version),
 
-      MODEL_CATALOG_URL: JSON.stringify(
-        'https://raw.githubusercontent.com/janhq/model-catalog/main/model_catalog_v2.json'
-      ),
-      LATEST_JAN_MODEL_URL: JSON.stringify(
-        'https://raw.githubusercontent.com/janhq/model-catalog/main/latest_jan_model.json'
-      ),
       AUTO_UPDATER_DISABLED: JSON.stringify(
         env.AUTO_UPDATER_DISABLED === 'true'
       ),

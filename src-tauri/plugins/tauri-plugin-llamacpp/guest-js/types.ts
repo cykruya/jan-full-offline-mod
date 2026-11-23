@@ -131,15 +131,6 @@ export type LlamacppConfig = {
   keep: number
 }
 
-export interface DownloadItem {
-  url: string
-  save_path: string
-  proxy?: Record<string, string | string[] | boolean>
-  sha256?: string
-  size?: number
-  model_id?: string
-}
-
 export interface ModelConfig {
   model_path: string
   mmproj_path?: string
