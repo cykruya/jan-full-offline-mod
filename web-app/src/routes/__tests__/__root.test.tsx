@@ -5,8 +5,6 @@ import '@testing-library/jest-dom'
 import React from 'react'
 
 const h = vi.hoisted(() => ({
-  productAnalyticPrompt: false,
-  isOnboarding: false,
   leftPanelOpen: true,
   sidebarWidth: 260,
   setLeftPanel: vi.fn(),
@@ -47,9 +45,6 @@ vi.mock('@/providers/ExtensionProvider', () => ({
 vi.mock('@/providers/ToasterProvider', () => ({
   ToasterProvider: () => <div data-testid="toaster-provider" />,
 }))
-vi.mock('@/providers/AnalyticProvider', () => ({
-  AnalyticProvider: () => <div data-testid="analytic-provider" />,
-}))
 vi.mock('@/providers/GlobalEventHandler', () => ({
   GlobalEventHandler: () => <div data-testid="global-event" />,
 }))
@@ -82,9 +77,6 @@ vi.mock('@/containers/dialogs/AttachmentIngestionDialog', () => ({
 vi.mock('@/containers/dialogs/ErrorDialog', () => ({
   default: () => <div data-testid="error-dialog" />,
 }))
-vi.mock('@/containers/analytics/PromptAnalytic', () => ({
-  PromptAnalytic: () => <div data-testid="prompt-analytic" />,
-}))
 vi.mock('@/containers/GlobalError', () => ({
   default: ({ error }: any) => <div data-testid="global-error">{error?.message}</div>,
 }))
@@ -106,12 +98,6 @@ vi.mock('@/components/ui/sidebar', () => ({
 }))
 
 // Hooks
-vi.mock('@/hooks/useAnalytic', () => ({
-  useAnalytic: () => ({ productAnalyticPrompt: h.productAnalyticPrompt }),
-}))
-vi.mock('@/hooks/useIsOnboarding', () => ({
-  useIsOnboarding: () => h.isOnboarding,
-}))
 vi.mock('@/hooks/useLeftPanel', () => ({
   useLeftPanel: () => ({
     open: h.leftPanelOpen,
@@ -139,8 +125,6 @@ const renderComponent = () => {
 describe('__root route', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    h.productAnalyticPrompt = false
-    h.isOnboarding = false
     // reset document state
     document.body.className = ''
     const loader = document.getElementById('initial-loader')
@@ -180,28 +164,6 @@ describe('__root route', () => {
     renderComponent()
     expect(screen.getByTestId('download-events')).toBeInTheDocument()
   })
-
-  it('renders PromptAnalytic when productAnalyticPrompt is true', () => {
-    h.productAnalyticPrompt = true
-    renderComponent()
-    expect(screen.getByTestId('prompt-analytic')).toBeInTheDocument()
-  })
-
-  // The setup screen is the single onboarding surface; this would otherwise
-  // stack on top of it asking for something the wizard already covers.
-  it('defers the analytics prompt while onboarding', () => {
-    h.isOnboarding = true
-    h.productAnalyticPrompt = true
-    renderComponent()
-    expect(screen.queryByTestId('prompt-analytic')).not.toBeInTheDocument()
-  })
-
-  it('does not render PromptAnalytic when productAnalyticPrompt is false', () => {
-    h.productAnalyticPrompt = false
-    renderComponent()
-    expect(screen.queryByTestId('prompt-analytic')).not.toBeInTheDocument()
-  })
-
 
   it('uses LogsLayout on /logs path (no sidebar)', () => {
     window.history.pushState({}, '', '/logs')

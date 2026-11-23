@@ -18,7 +18,6 @@ import { goto, waitForPath } from '../helpers/navigation.js'
 import { janUserDataDir } from '../helpers/paths.js'
 import {
   configureMockProvider,
-  denyAnalyticsConsent,
   selectModel,
 } from '../helpers/provider.js'
 
@@ -305,7 +304,6 @@ describe('image size limit', () => {
     await $('#root').waitForExist({ timeout: 60_000 })
 
     await configureMockProvider(mock, PROVIDER_NAME)
-    await denyAnalyticsConsent({ required: false })
 
     // A model added by hand only gets `completion`, and every image intake path
     // in ChatInput is gated on the `vision` capability (hasMmproj). Turn it on

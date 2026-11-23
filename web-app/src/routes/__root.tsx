@@ -9,10 +9,6 @@ import { KeyboardShortcutsProvider } from '@/providers/KeyboardShortcuts'
 import { DataProvider } from '@/providers/DataProvider'
 import { route } from '@/constants/routes'
 import { ToasterProvider } from '@/providers/ToasterProvider'
-import { useAnalytic } from '@/hooks/useAnalytic'
-import { useIsOnboarding } from '@/hooks/useIsOnboarding'
-import { PromptAnalytic } from '@/containers/analytics/PromptAnalytic'
-import { AnalyticProvider } from '@/providers/AnalyticProvider'
 import { useLeftPanel } from '@/hooks/useLeftPanel'
 import OutOfContextPromiseModal from '@/containers/dialogs/OutOfContextDialog'
 import AttachmentIngestionDialog from '@/containers/dialogs/AttachmentIngestionDialog'
@@ -34,10 +30,6 @@ export const Route = createRootRoute({
 })
 
 const AppLayout = () => {
-  const { productAnalyticPrompt } = useAnalytic()
-  // The setup screen is the only onboarding surface: everything below that would
-  // otherwise stack on top of it is deferred until it is done.
-  const isOnboarding = useIsOnboarding()
   const {
     open: isLeftPanelOpen,
     setLeftPanel,
@@ -53,7 +45,6 @@ const AppLayout = () => {
         defaultWidth={sidebarWidth}
         onWidthChange={setLeftPanelWidth}
       >
-        <AnalyticProvider />
         <KeyboardShortcutsProvider />
         {/* Fake absolute panel top to enable window drag */}
         {(IS_WINDOWS || IS_LINUX) && <WindowControls />}
@@ -73,8 +64,6 @@ const AppLayout = () => {
             <Outlet />
           </div>
         </SidebarInset>
-
-        {productAnalyticPrompt && !isOnboarding && <PromptAnalytic />}
       </SidebarProvider>
     </div>
   )

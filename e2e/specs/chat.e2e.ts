@@ -20,7 +20,6 @@ import { goto } from '../helpers/navigation.js'
 import { janUserDataDir } from '../helpers/paths.js'
 import {
   configureMockProvider,
-  denyAnalyticsConsent,
   selectModel,
 } from '../helpers/provider.js'
 
@@ -59,10 +58,6 @@ describe('chat critical path', () => {
     await $('#root').waitForExist({ timeout: 60_000 })
 
     await configureMockProvider(mock, PROVIDER_NAME)
-
-    // This is the spec that completes onboarding, so the consent panel must be
-    // here; see the helper for why `required` is not always true.
-    await denyAnalyticsConsent({ required: true })
   })
 
   after(async () => {

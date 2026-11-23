@@ -102,42 +102,6 @@ export async function configureMockProvider(
 }
 
 /**
- * Answer the analytics consent panel, which covers the composer's send button.
- *
- * The moment a provider completes onboarding, PromptAnalytic floats the panel at
- * `fixed bottom-4 right-4 z-50` (containers/analytics/) directly over the send
- * button. Deny rather than allow -- a test run has no business opting into
- * telemetry.
- *
- * `required` is what makes this honest. The panel appears once per profile, so
- * the spec that completes onboarding first must insist on seeing it (a silent
- * skip there would mean it is still to come, landing over whatever is being
- * clicked at the time). Every later spec in the same run must not, because the
- * answer is already recorded and waiting for it would hang for the full timeout.
- */
-export async function denyAnalyticsConsent({ required }: { required: boolean }) {
-  const deny = await $('[data-testid="analytic-deny"]')
-
-  if (!required) {
-    if (!(await deny.isExisting())) return
-  } else {
-    await deny.waitForDisplayed({
-      timeout: 30_000,
-      timeoutMsg:
-        'the analytics consent prompt never appeared after the provider was ' +
-        'configured. If it moved behind another condition, drop this step -- ' +
-        'but check first that it cannot appear later and cover the composer.',
-    })
-  }
-
-  await deny.click()
-  await $('[data-testid="analytic-consent"]').waitForDisplayed({
-    reverse: true,
-    timeout: 30_000,
-  })
-}
-
-/**
  * Pick a model in the chat composer's dropdown.
  *
  * Mandatory and explicit: useModelProvider defaults to

@@ -18,9 +18,9 @@ import { browser, $ } from '@wdio/globals'
  * (tauri-plugin-wdio-webdriver, src/platform/executor.rs), which sails through
  * anything painted on top. So the precheck can only ever reject clicks that
  * would have worked, and on a first launch there is plenty painted on top --
- * the analytics consent panel floats over the composer, and an unseeded profile
- * toasts "Download Complete" over the header. Neither stops the click, but
- * either turns this into a 30s timeout naming an element that is fine.
+ * an unseeded profile toasts "Download Complete" over the header. That does not
+ * stop the click, but turns this into a 30s timeout naming an element that is
+ * fine.
  *
  * Displayed and enabled are still worth waiting for: those are real states this
  * app puts its controls in (Add Model stays disabled until the id field has

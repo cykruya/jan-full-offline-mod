@@ -11,7 +11,6 @@ import type { MockOpenAI } from '../helpers/mock-openai.js'
 import { goto } from '../helpers/navigation.js'
 import {
   configureMockProvider,
-  denyAnalyticsConsent,
   selectModel,
 } from '../helpers/provider.js'
 
@@ -82,10 +81,6 @@ describe('message actions', () => {
     await $('#root').waitForExist({ timeout: 60_000 })
 
     await configureMockProvider(mock, PROVIDER_NAME)
-    // Not required: the panel appears once per profile and chat.e2e.ts already
-    // answered it earlier in this same app process. Insisting on it here would
-    // hang for the full timeout.
-    await denyAnalyticsConsent({ required: false })
 
     await goto('/')
     await selectModel(MODEL_ID)
