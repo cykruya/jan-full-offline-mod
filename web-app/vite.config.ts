@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
@@ -8,10 +8,7 @@ import packageJson from './package.json'
 const host = process.env.TAURI_DEV_HOST
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => {
-  // Load env file based on `mode` in the current working directory.
-  const env = loadEnv(mode, process.cwd(), '')
-
+export default defineConfig(() => {
   return {
     plugins: [
       TanStackRouterVite({
@@ -71,12 +68,6 @@ export default defineConfig(({ mode }) => {
 
       VERSION: JSON.stringify(packageJson.version),
 
-      AUTO_UPDATER_DISABLED: JSON.stringify(
-        env.AUTO_UPDATER_DISABLED === 'true'
-      ),
-      UPDATE_CHECK_INTERVAL_MS: JSON.stringify(
-        Number(env.UPDATE_CHECK_INTERVAL_MS) || 60 * 60 * 1000
-      ),
     },
 
     // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`

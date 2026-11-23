@@ -31,8 +31,6 @@ export enum NativeRoute {
   startServer = 'startServer',
   stopServer = 'stopServer',
 
-  appUpdateDownload = 'appUpdateDownload',
-
   appToken = 'appToken',
 }
 
@@ -55,11 +53,6 @@ export enum AppRoute {
 }
 
 export enum AppEvent {
-  onAppUpdateNotAvailable = 'onAppUpdateNotAvailable',
-  onAppUpdateAvailable = 'onAppUpdateAvailable',
-  onAppUpdateDownloadUpdate = 'onAppUpdateDownloadUpdate',
-  onAppUpdateDownloadError = 'onAppUpdateDownloadError',
-  onAppUpdateDownloadSuccess = 'onAppUpdateDownloadSuccess',
   onModelImported = 'onModelImported',
 
   onUserSubmitQuickAsk = 'onUserSubmitQuickAsk',

@@ -331,14 +331,6 @@
       "title": "Upravit zprávu",
       "description": "Zpráva byla úspěšně upravena. Počkejte prosím na odpověď modelu."
     },
-    "appUpdateDownloaded": {
-      "title": "Aktualizace aplikace stažena",
-      "description": "Aktualizace aplikace byla úspěšně stažena."
-    },
-    "appUpdateDownloadFailed": {
-      "title": "Stahování aktualizace aplikace selhalo",
-      "description": "Nepodařilo se stáhnout aktualizaci aplikace. Zkuste to prosím znovu."
-    },
     "projectCreated": {
       "title": "Projekt vytvořen",
       "description": "Projekt \"{{projectName}}\" byl úspěšně vytvořen"

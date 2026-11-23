@@ -370,14 +370,6 @@
       "title": "Editar mensaje",
       "description": "Mensaje editado correctamente. Por favor espera la respuesta del modelo."
     },
-    "appUpdateDownloaded": {
-      "title": "Actualización descargada",
-      "description": "La actualización de la aplicación se ha descargado correctamente."
-    },
-    "appUpdateDownloadFailed": {
-      "title": "Error en la descarga de actualización",
-      "description": "Error al descargar la actualización. Por favor, inténtalo de nuevo."
-    },
     "projectCreated": {
       "title": "Proyecto creado",
       "description": "Proyecto \"{{projectName}}\" creado correctamente"

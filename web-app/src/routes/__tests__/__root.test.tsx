@@ -62,9 +62,6 @@ vi.mock('@/i18n/TranslationContext', () => ({
 }))
 
 // Dialogs / containers
-vi.mock('@/containers/dialogs/AppUpdater', () => ({
-  default: () => <div data-testid="app-updater" />,
-}))
 vi.mock('@/containers/dialogs/OutOfContextDialog', () => ({
   default: () => <div data-testid="oocp" />,
 }))
@@ -152,7 +149,6 @@ describe('__root route', () => {
     expect(screen.getByTestId('attach-ingest')).toBeInTheDocument()
     expect(screen.getByTestId('error-dialog')).toBeInTheDocument()
     expect(screen.getByTestId('oocp')).toBeInTheDocument()
-    expect(screen.getByTestId('app-updater')).toBeInTheDocument()
   })
 
   it('uses LogsLayout on /logs path (no sidebar)', () => {

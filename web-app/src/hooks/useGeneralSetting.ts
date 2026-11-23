@@ -6,11 +6,9 @@ import { backendStorage } from '@/lib/backendStorage'
 type GeneralSettingState = {
   currentLanguage: Language
   spellCheckChatInput: boolean
-  autoUpdateCheck: boolean
   closeToTray: boolean
   stripReasoningFromContext: boolean
   setSpellCheckChatInput: (value: boolean) => void
-  setAutoUpdateCheck: (value: boolean) => void
   setCloseToTray: (value: boolean) => void
   setStripReasoningFromContext: (value: boolean) => void
   setCurrentLanguage: (value: Language) => void
@@ -21,11 +19,9 @@ export const useGeneralSetting = create<GeneralSettingState>()(
     (set) => ({
       currentLanguage: 'en',
       spellCheckChatInput: true,
-      autoUpdateCheck: true,
       closeToTray: false,
       stripReasoningFromContext: false,
       setSpellCheckChatInput: (value) => set({ spellCheckChatInput: value }),
-      setAutoUpdateCheck: (value) => set({ autoUpdateCheck: value }),
       setCloseToTray: (value) => set({ closeToTray: value }),
       setStripReasoningFromContext: (value) =>
         set({ stripReasoningFromContext: value }),
@@ -38,7 +34,6 @@ export const useGeneralSetting = create<GeneralSettingState>()(
       partialize: (state) => ({
         currentLanguage: state.currentLanguage,
         spellCheckChatInput: state.spellCheckChatInput,
-        autoUpdateCheck: state.autoUpdateCheck,
         closeToTray: state.closeToTray,
         stripReasoningFromContext: state.stripReasoningFromContext,
       }),

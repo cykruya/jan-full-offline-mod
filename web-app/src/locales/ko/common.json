@@ -369,14 +369,6 @@
       "title": "메시지 수정",
       "description": "메시지가 성공적으로 수정되었습니다. 모델이 응답할 때까지 기다려 주세요."
     },
-    "appUpdateDownloaded": {
-      "title": "앱 업데이트 다운로드됨",
-      "description": "앱 업데이트가 성공적으로 다운로드되었습니다."
-    },
-    "appUpdateDownloadFailed": {
-      "title": "앱 업데이트 다운로드 실패",
-      "description": "앱 업데이트를 다운로드하지 못했습니다. 다시 시도해 주세요."
-    },
     "projectCreated": {
       "title": "프로젝트 생성됨",
       "description": "\"{{projectName}}\" 프로젝트가 성공적으로 생성되었습니다"

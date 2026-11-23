@@ -72,7 +72,6 @@ macro_rules! invoke_commands_with_extras {
         core::server::provider_secrets::get_secret,
         // System commands
         core::system::commands::relaunch,
-        core::system::shutdown::shutdown_for_update,
         core::system::commands::factory_reset,
         core::system::commands::take_pending_webdata_reset,
         core::system::commands::read_logs,
@@ -477,15 +476,9 @@ pub fn run() {
         ));
     }
 
-    // Desktop: include updater commands
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
-    let app_builder = app_builder.invoke_handler(invoke_commands_with_extras![
-        // Custom updater commands (desktop only)
-        core::updater::commands::check_for_app_updates,
-        core::updater::commands::is_update_available,
-    ]);
+    let app_builder = app_builder.invoke_handler(invoke_commands_with_extras![]);
 
-    // Mobile: no updater commands
     #[cfg(any(target_os = "android", target_os = "ios"))]
     let app_builder = app_builder.invoke_handler(invoke_commands_with_extras![
         // Mobile-specific remote provider commands
@@ -542,10 +535,6 @@ pub fn run() {
             // Load the read grants before the event loop delivers any IPC, so a
             // read of a path the user picked in an earlier session is allowed.
             core::filesystem::grants::init(app.handle());
-            #[cfg(not(any(target_os = "ios", target_os = "android")))]
-            app.handle()
-                .plugin(tauri_plugin_updater::Builder::new().build())?;
-
             // A factory reset only moves data aside and restarts; deleting it,
             // which can take a while for a big models folder, happens here.
             {

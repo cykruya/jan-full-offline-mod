@@ -325,14 +325,6 @@
       "title": "Edytuj Wiadomość",
       "description": "Pomyślnie edytowano wiadomość. Proszę poczekać na odpowiedź modelu."
     },
-    "appUpdateDownloaded": {
-      "title": "Aktualizacja Aplikacji Pobrana",
-      "description": "Pomyślnie pobrano aktualizację aplikacji."
-    },
-    "appUpdateDownloadFailed": {
-      "title": "Błąd Pobierania Aktualizacji Aplikacji",
-      "description": "Nie udało się pobrać aktualizacji aplikacji. Proszę spróbować później."
-    },
     "projectCreated": {
       "title": "Projekt Utworzony",
       "description": "Projekt \"{{projectName}}\" został pomyślnie utworzony"

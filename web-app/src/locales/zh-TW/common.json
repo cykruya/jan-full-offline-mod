@@ -331,14 +331,6 @@
       "title": "編輯訊息",
       "description": "訊息編輯成功。請等待模型回應。"
     },
-    "appUpdateDownloaded": {
-      "title": "應用程式更新已下載",
-      "description": "應用程式更新已成功下載。"
-    },
-    "appUpdateDownloadFailed": {
-      "title": "應用程式更新下載失敗",
-      "description": "下載應用程式更新失敗。請再試一次。"
-    },
     "projectCreated": {
       "title": "專案已建立",
       "description": "專案「{{projectName}}」已成功建立"

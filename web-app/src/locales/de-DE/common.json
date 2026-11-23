@@ -363,14 +363,6 @@
       "title": "Nachricht bearbeiten",
       "description": "Die Nachricht wurde erfolgreich bearbeitet. Bitte warte auf die Antwort des Models."
     },
-    "appUpdateDownloaded": {
-      "title": "App Update heruntergeladen",
-      "description": "Das App-Update wurde erfolgreich heruntergeladen."
-    },
-    "appUpdateDownloadFailed": {
-      "title": "App Update Download fehlgeschlagen",
-      "description": "Das App-Update konnte nicht heruntergeladen werden. Bitte versuche es noch einmal."
-    },
     "deleteAllChats": {
       "title": "Unterhaltungen gelöscht",
       "description": "Unterhaltungen außerhalb von Projekten wurden gelöscht. Projektunterhaltungen und Aufgaben wurden behalten."

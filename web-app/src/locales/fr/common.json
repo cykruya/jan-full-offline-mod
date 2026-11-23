@@ -330,14 +330,6 @@
       "title": "Modifier le message",
       "description": "Message modifié avec succès. Veuillez attendre la réponse du modèle."
     },
-    "appUpdateDownloaded": {
-      "title": "Mise à jour de l'application téléchargée",
-      "description": "La mise à jour de l'application a été téléchargée avec succès."
-    },
-    "appUpdateDownloadFailed": {
-      "title": "Échec du téléchargement de la mise à jour de l'application",
-      "description": "Échec du téléchargement de la mise à jour de l'application. Veuillez réessayer."
-    },
     "projectCreated": {
       "title": "Projet créé",
       "description": "Le projet \"{{projectName}}\" a été créé avec succès"

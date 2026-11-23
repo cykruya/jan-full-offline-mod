@@ -328,14 +328,6 @@
       "title": "Editar Mensagem",
       "description": "Mensagem editada com sucesso. Aguarde a resposta do modelo."
     },
-    "appUpdateDownloaded": {
-      "title": "Atualização do App Baixada",
-      "description": "A atualização do app foi baixada com sucesso."
-    },
-    "appUpdateDownloadFailed": {
-      "title": "Falha no Download da Atualização do App",
-      "description": "Falha ao baixar a atualização do app. Tente novamente."
-    },
     "projectCreated": {
       "title": "Projeto Criado",
       "description": "Projeto \"{{projectName}}\" criado com sucesso"

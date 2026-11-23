@@ -1,6 +1,5 @@
 import { useModelProvider } from '@/hooks/useModelProvider'
 
-import { useAppUpdater } from '@/hooks/useAppUpdater'
 import { useGeneralSetting } from '@/hooks/useGeneralSetting'
 import { useServiceHub } from '@/hooks/useServiceHub'
 import { useEffect, useRef } from 'react'
@@ -11,7 +10,6 @@ import { useCoworkSessions } from '@/hooks/useCoworkSessions'
 import { useLocalApiServer } from '@/hooks/useLocalApiServer'
 import { useAppState } from '@/hooks/useAppState'
 import { AppEvent, events } from '@janhq/core'
-import { isDev } from '@/lib/utils'
 import { sweepThreadWorkspaces } from '@/lib/agentTools'
 import { invoke } from '@tauri-apps/api/core'
 import { providerHasRemoteApiKeys, providerRemoteApiKeyChain } from '@/lib/provider-api-keys'
@@ -181,8 +179,6 @@ export function DataProvider() {
   const { setProviders, getProviderByName } =
     useModelProvider()
 
-  const { checkForUpdate } = useAppUpdater()
-  const autoUpdateCheck = useGeneralSetting((s) => s.autoUpdateCheck)
   const closeToTray = useGeneralSetting((s) => s.closeToTray)
   const { setServers, setSettings } = useMCPServers()
   const { setAssistants } = useAssistant()
@@ -320,37 +316,6 @@ export function DataProvider() {
     syncRemoteProviders()
     syncModelParamDefaults()
   }, [providers])
-
-  // Check for app updates - initial check and periodic interval
-  useEffect(() => {
-    // Only check for updates if the auto updater is not disabled
-    // App might be distributed via other package managers
-    // or methods that handle updates differently
-    if (isDev() || !autoUpdateCheck) {
-      return
-    }
-
-    // Defer the initial check until the browser is idle (after first paint) so
-    // the network round-trip and any resulting dialog don't compete with the
-    // initial render.
-    const hasRic = typeof window.requestIdleCallback === 'function'
-    const idleHandle = hasRic
-      ? window.requestIdleCallback(() => checkForUpdate(), { timeout: 3000 })
-      : window.setTimeout(() => checkForUpdate(), 0)
-
-    // Set up periodic update checks (singleton - only runs in DataProvider)
-    const intervalId = setInterval(() => {
-      console.log('Periodic update check triggered')
-      checkForUpdate()
-    }, Number(UPDATE_CHECK_INTERVAL_MS))
-
-    // Cleanup interval on unmount
-    return () => {
-      if (hasRic) window.cancelIdleCallback(idleHandle as number)
-      else window.clearTimeout(idleHandle as number)
-      clearInterval(intervalId)
-    }
-  }, [checkForUpdate, autoUpdateCheck])
 
   useEffect(() => {
     const handler = () => {

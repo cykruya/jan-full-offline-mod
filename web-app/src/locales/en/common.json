@@ -512,14 +512,6 @@
       "title": "Edit Message",
       "description": "Message edited successfully. Please wait for the model to respond."
     },
-    "appUpdateDownloaded": {
-      "title": "App Update Downloaded",
-      "description": "The app update has been downloaded successfully."
-    },
-    "appUpdateDownloadFailed": {
-      "title": "App Update Download Failed",
-      "description": "Failed to download the app update. Please try again."
-    },
     "openSettings": "Open Settings",
     "projectCreated": {
       "title": "Project Created",

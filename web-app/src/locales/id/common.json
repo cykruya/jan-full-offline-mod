@@ -274,14 +274,6 @@
       "title": "Edit Pesan",
       "description": "Pesan berhasil diedit. Silakan tunggu model merespons."
     },
-    "appUpdateDownloaded": {
-      "title": "Pembaruan Aplikasi Diunduh",
-      "description": "Pembaruan aplikasi telah berhasil diunduh."
-    },
-    "appUpdateDownloadFailed": {
-      "title": "Gagal Mengunduh Pembaruan Aplikasi",
-      "description": "Gagal mengunduh pembaruan aplikasi. Silakan coba lagi."
-    },
     "projectCreated": {
       "title": "Proyek Dibuat",
       "description": "Proyek \"{{projectName}}\" berhasil dibuat"

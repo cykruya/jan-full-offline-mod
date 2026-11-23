@@ -403,14 +403,6 @@
       "title": "メッセージを編集",
       "description": "メッセージは正常に編集されました。モデルの応答をお待ちください。"
     },
-    "appUpdateDownloaded": {
-      "title": "アプリの更新をダウンロードしました",
-      "description": "アプリの更新は正常にダウンロードされました。"
-    },
-    "appUpdateDownloadFailed": {
-      "title": "アプリの更新のダウンロードに失敗しました",
-      "description": "アプリの更新のダウンロードに失敗しました。もう一度お試しください。"
-    },
     "projectCreated": {
       "title": "プロジェクトが作成されました",
       "description": "プロジェクト「{{projectName}}」は正常に作成されました"

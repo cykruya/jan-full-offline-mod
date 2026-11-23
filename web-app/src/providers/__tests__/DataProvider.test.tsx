@@ -1,9 +1,6 @@
 import { render, waitFor, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-// Stub the build-time define used by DataProvider
-;(globalThis as unknown as { UPDATE_CHECK_INTERVAL_MS: number }).UPDATE_CHECK_INTERVAL_MS = 60_000
-
 // Hoisted shared mocks/state
 const h = vi.hoisted(() => {
   return {
@@ -11,7 +8,6 @@ const h = vi.hoisted(() => {
     updateProvider: vi.fn(),
     getProviderByName: vi.fn(),
     providers: [] as Array<Record<string, unknown>>,
-    checkForUpdate: vi.fn(),
     setServers: vi.fn(),
     setSettings: vi.fn(),
     setAssistants: vi.fn(),
@@ -64,9 +60,6 @@ vi.mock('@/hooks/useModelProvider', () => {
 
 vi.mock('@/hooks/useExtensionProviders', () => ({
   useExtensionProviders: vi.fn(),
-}))
-vi.mock('@/hooks/useAppUpdater', () => ({
-  useAppUpdater: () => ({ checkForUpdate: h.checkForUpdate }),
 }))
 
 vi.mock('@/hooks/useMCPServers', () => ({
@@ -448,33 +441,6 @@ describe('DataProvider', () => {
     await waitFor(() => {
       expect(h.eventsOn).toHaveBeenCalledWith('onModelImported', expect.any(Function))
     })
-  })
-
-  it('skips update check when in dev mode', async () => {
-    h.isDev.mockReturnValue(true)
-    render(<DataProvider />)
-    // Yield microtasks
-    await act(async () => {
-      await Promise.resolve()
-    })
-    expect(h.checkForUpdate).not.toHaveBeenCalled()
-  })
-
-  it('defers initial update check off mount and schedules periodic checks outside dev', async () => {
-    vi.useFakeTimers()
-    h.isDev.mockReturnValue(false)
-    render(<DataProvider />)
-    // Initial check is deferred to idle (setTimeout fallback in jsdom), not on mount
-    expect(h.checkForUpdate).not.toHaveBeenCalled()
-    await act(async () => {
-      vi.advanceTimersByTime(1)
-    })
-    expect(h.checkForUpdate).toHaveBeenCalledTimes(1)
-    await act(async () => {
-      vi.advanceTimersByTime(60_000)
-    })
-    expect(h.checkForUpdate).toHaveBeenCalledTimes(2)
-    vi.useRealTimers()
   })
 
   it('does not start server on mount when enableOnStartup is false', async () => {

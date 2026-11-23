@@ -32,8 +32,6 @@
     "agent-tools:default",
     "hardware:default",
     "llamacpp:default",
-    "updater:default",
-    "updater:allow-check",
     {
       "identifier": "http:default",
       "allow": [

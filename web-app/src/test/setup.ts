@@ -111,11 +111,6 @@ const mockServiceHub = {
     revealItemInDir: vi.fn().mockResolvedValue(undefined),
     openPath: vi.fn().mockResolvedValue(undefined),
   }),
-  updater: () => ({
-    checkForUpdates: vi.fn().mockResolvedValue(null),
-    installUpdate: vi.fn().mockResolvedValue(undefined),
-    downloadAndInstallWithProgress: vi.fn().mockResolvedValue(undefined),
-  }),
   path: vi.fn().mockReturnValue({
     sep: () => '/',
     join: vi.fn((...args) => args.join('/')),

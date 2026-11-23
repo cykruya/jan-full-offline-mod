@@ -331,14 +331,6 @@
       "title": "Chỉnh sửa tin nhắn",
       "description": "Tin nhắn đã được chỉnh sửa thành công. Vui lòng đợi mô hình phản hồi."
     },
-    "appUpdateDownloaded": {
-      "title": "Đã tải xuống bản cập nhật ứng dụng",
-      "description": "Bản cập nhật ứng dụng đã được tải xuống thành công."
-    },
-    "appUpdateDownloadFailed": {
-      "title": "Tải xuống bản cập nhật ứng dụng thất bại",
-      "description": "Không thể tải xuống bản cập nhật ứng dụng. Vui lòng thử lại."
-    },
     "projectCreated": {
       "title": "Dự án đã được tạo",
       "description": "Dự án \"{{projectName}}\" đã được tạo thành công"

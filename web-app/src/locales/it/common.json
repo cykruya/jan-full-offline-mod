@@ -391,14 +391,6 @@
       "title": "Modifica messaggio",
       "description": "Messaggio modificato con successo. Attendi la risposta del modello."
     },
-    "appUpdateDownloaded": {
-      "title": "Aggiornamento app scaricato",
-      "description": "L'aggiornamento dell'app è stato scaricato con successo."
-    },
-    "appUpdateDownloadFailed": {
-      "title": "Download dell'aggiornamento fallito",
-      "description": "Impossibile scaricare l'aggiornamento dell'app. Riprova."
-    },
     "projectCreated": {
       "title": "Progetto creato",
       "description": "Progetto \"{{projectName}}\" creato con successo"

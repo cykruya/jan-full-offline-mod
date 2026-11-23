@@ -386,14 +386,6 @@
       "title": "编辑消息",
       "description": "消息编辑成功。请等待模型响应。"
     },
-    "appUpdateDownloaded": {
-      "title": "应用更新已下载",
-      "description": "应用更新已成功下载。"
-    },
-    "appUpdateDownloadFailed": {
-      "title": "应用更新下载失败",
-      "description": "下载应用更新失败。请重试。"
-    },
     "projectCreated": {
       "title": "项目已创建",
       "description": "项目\"{{projectName}}\"创建成功"
