@@ -45,10 +45,11 @@ describe('WebToolWidget search variant', () => {
     ).toBeInTheDocument()
   })
 
-  it('lists results with a favicon and host once they arrive', () => {
-    render(
+  it('lists results with their host once they arrive, fetching no favicon', () => {
+    const { container } = render(
       <WebToolWidget bar={searchBar} state="output-available" output={webOutput} />
     )
+    expect(container.querySelector('img')).toBeNull()
     expect(screen.getByText('The Book')).toBeInTheDocument()
     expect(screen.getByText('Tokio Guide')).toBeInTheDocument()
     expect(screen.getByText('tokio.rs')).toBeInTheDocument()

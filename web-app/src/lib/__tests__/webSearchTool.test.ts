@@ -68,7 +68,7 @@ describe('the web tools go where the Web Search settings point', () => {
       kind: 'web',
       query: 'rust',
       results: [
-        { url: 'https://rust-lang.org/', title: 'Rust', text: 'A language', published_date: '2026-01-01', favicon: 'https://www.google.com/s2/favicons?domain=rust-lang.org&sz=64' },
+        { url: 'https://rust-lang.org/', title: 'Rust', text: 'A language', published_date: '2026-01-01' },
       ],
     })
   })

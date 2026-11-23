@@ -3,7 +3,6 @@ import { useTranslation } from '@/i18n/react-i18next-compat'
 import { ChevronRightIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Citations, type WebCitation } from '@/components/Citations'
-import { faviconForUrl } from '@/lib/webUrl'
 import { useRemoteImagesAllowed } from '@/lib/extensions/remoteImages'
 
 export const WebSourcesRow = memo(
@@ -25,7 +24,7 @@ export const WebSourcesRow = memo(
 
     if (!unique.length) return null
 
-    const preview = unique.slice(0, 4)
+    const preview = unique.filter((c) => c.favicon).slice(0, 4)
 
     return (
       <div className="mt-3">
@@ -35,12 +34,12 @@ export const WebSourcesRow = memo(
           className="inline-flex items-center gap-2 rounded-full border bg-card/40 py-1 pl-1.5 pr-2.5 text-xs text-muted-foreground transition-colors hover:bg-card/70"
           aria-expanded={expanded}
         >
-          {remoteImages && (
+          {remoteImages && preview.length > 0 && (
             <span className="flex -space-x-1.5">
               {preview.map((c) => (
                 <img
                   key={c.url}
-                  src={c.favicon || faviconForUrl(c.url)}
+                  src={c.favicon}
                   alt=""
                   className="size-4 rounded-full border border-border/60 bg-white object-contain"
                 />

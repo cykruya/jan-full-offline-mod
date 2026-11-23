@@ -631,7 +631,7 @@ describe('RenderMarkdown', () => {
       const webCitation = container.querySelector(
         'a[href="https://example.com/source"]'
       )
-      expect(webCitation?.querySelector('img')).toBeTruthy()
+      expect(webCitation?.querySelector('svg')).toBeTruthy()
       expect(webCitation?.hasAttribute('target')).toBe(false)
       vi.mocked(openExternalUrl).mockClear()
       expect(fireEvent.click(webCitation!)).toBe(false)
@@ -643,7 +643,7 @@ describe('RenderMarkdown', () => {
   })
 
   describe('web citation markers', () => {
-    it('renders a [[cite:URL]] marker as a favicon link to the source', () => {
+    it('renders a [[cite:URL]] marker as an icon link to the source', () => {
       const { container } = render(
         <RenderMarkdown
           content={'Paris is the capital of France.[[cite:https://en.wikipedia.org/wiki/Paris]]'}
@@ -654,7 +654,9 @@ describe('RenderMarkdown', () => {
         'a[href="https://en.wikipedia.org/wiki/Paris"]'
       )
       expect(link).toBeTruthy()
-      expect(link?.querySelector('img')).toBeTruthy()
+      // No favicon is fetched for a source the tool output gave none for.
+      expect(link?.querySelector('img')).toBeNull()
+      expect(link?.querySelector('svg')).toBeTruthy()
       // The raw marker text must not leak into the rendered output.
       expect(container.textContent).not.toContain('[[cite:')
     })
@@ -670,7 +672,7 @@ describe('RenderMarkdown', () => {
         'a[href="https://example.com/article/foo-bar"]'
       )
       expect(link).toBeTruthy()
-      expect(link?.querySelector('img')).toBeTruthy()
+      expect(link?.querySelector('svg')).toBeTruthy()
       expect(container.textContent).not.toContain('[[cite:')
     })
 

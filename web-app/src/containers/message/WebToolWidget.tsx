@@ -9,23 +9,9 @@ import {
   parseWebFetchOutput,
   type ToolCallBar,
 } from '@/lib/toolPresentation'
-import { faviconForUrl, hostOf } from '@/lib/webUrl'
+import { hostOf } from '@/lib/webUrl'
 import { ToolBar } from './ToolBar'
 import { ExternalAnchor } from '@/components/ExternalAnchor'
-import { useRemoteImagesAllowed } from '@/lib/extensions/remoteImages'
-
-// The favicon service is asked about the URL's host, so in a message an
-// extension authored even the address being typed would reach the network.
-const Favicon = ({ url }: { url: string }) =>
-  useRemoteImagesAllowed() ? (
-    <img
-      src={faviconForUrl(url)}
-      alt=""
-      className="size-4 shrink-0 rounded-full border border-border/60 bg-white object-contain"
-    />
-  ) : (
-    <GlobeIcon className="size-4 shrink-0 text-muted-foreground" />
-  )
 
 const ResultRow = ({
   url,
@@ -39,7 +25,7 @@ const ResultRow = ({
     className="flex items-center gap-2 rounded-md px-2 py-1.5 no-underline transition-colors hover:bg-secondary"
     title={url}
   >
-    <Favicon url={url} />
+    <GlobeIcon className="size-4 shrink-0 text-muted-foreground" />
     <span className="min-w-0 flex-1 truncate text-sm text-foreground">
       {title || hostOf(url)}
     </span>
@@ -100,7 +86,6 @@ export const WebToolWidget = memo(
             placeholder={t('tools:toolCall.addressPlaceholder')}
             typing={running}
             mono
-            trailing={bar.url ? <Favicon url={bar.url} /> : undefined}
           />
         )}
 

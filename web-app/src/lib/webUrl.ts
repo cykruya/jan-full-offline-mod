@@ -6,6 +6,3 @@ export const hostOf = (url: string): string => {
     return url
   }
 }
-
-export const faviconForUrl = (url: string): string =>
-  `https://www.google.com/s2/favicons?domain=${hostOf(url)}&sz=64`

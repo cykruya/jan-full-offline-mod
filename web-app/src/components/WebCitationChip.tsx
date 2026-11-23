@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/hover-card'
 import { useWebCitationStore } from '@/stores/web-citation-store'
 import { cn } from '@/lib/utils'
-import { faviconForUrl, hostOf } from '@/lib/webUrl'
+import { hostOf } from '@/lib/webUrl'
 import { ExternalAnchor } from '@/components/ExternalAnchor'
 import { useRemoteImagesAllowed } from '@/lib/extensions/remoteImages'
 
@@ -18,11 +18,8 @@ export const WebCitationChip = memo(
     )
     const host = hostOf(url)
     // Off in content an extension authored: the favicon is fetched from a host
-    // the citation names, or from the favicon service with that host in the
-    // query, so the extension could reach any host through it.
-    const favicon = useRemoteImagesAllowed()
-      ? citation?.favicon || faviconForUrl(url)
-      : undefined
+    // the citation names, so the extension could reach any host through it.
+    const favicon = useRemoteImagesAllowed() ? citation?.favicon : undefined
     return (
       <HoverCard openDelay={80} closeDelay={120}>
         <HoverCardTrigger asChild>
