@@ -27,6 +27,7 @@ import { useHardware } from '@/hooks/useHardware'
 import LanguageSwitcher from '@/containers/LanguageSwitcher'
 import { isRootDir } from '@/utils/path'
 import { relaunchAfterSave } from '@/lib/coworkSync'
+import { openHelp } from '@/lib/help'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const Route = createFileRoute(route.settings.general as any)({
@@ -340,16 +341,12 @@ function General() {
                   title={t('settings:general.janCli')}
                   description={t('settings:general.janCliDesc')}
                   actions={
-                    <a
-                      href="https://www.jan.ai/docs/agent/quickstart"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
+                    <button type="button" className="cursor-pointer" onClick={() => openHelp('agent/quickstart.html')}>
                       <div className="flex items-center gap-1">
                         <span>{t('settings:general.janCliSetupGuide')}</span>
                         <IconExternalLink size={14} />
                       </div>
-                    </a>
+                    </button>
                   }
                 />
               )}
@@ -394,16 +391,12 @@ function General() {
                 title={t('settings:general.documentation')}
                 description={t('settings:general.documentationDesc')}
                 actions={
-                  <a
-                    href="https://jan.ai/docs"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <button type="button" className="cursor-pointer" onClick={() => openHelp('desktop/index.html')}>
                     <div className="flex items-center gap-1">
                       <span>{t('settings:general.viewDocs')}</span>
                       <IconExternalLink size={14} />
                     </div>
-                  </a>
+                  </button>
                 }
               />
               <CardItem

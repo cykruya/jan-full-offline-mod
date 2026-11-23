@@ -943,6 +943,10 @@ Section Install
     CreateDirectory "$INSTDIR\resources\models"
     SetOutPath "$INSTDIR\resources\models"
     File /a "jan_workspace\src-tauri\resources\models\sentence-transformer-mini.gguf"
+    ; The offline help file the documentation links open.
+    CreateDirectory "$INSTDIR\resources\help"
+    SetOutPath "$INSTDIR\resources\help"
+    File /a "jan_workspace\src-tauri\resources\help\Jan.chm"
     SetOutPath $INSTDIR
 
   ; Copy external binaries

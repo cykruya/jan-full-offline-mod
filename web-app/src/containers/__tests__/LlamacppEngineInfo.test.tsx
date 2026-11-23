@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 vi.mock('@/i18n/react-i18next-compat', () => ({
   useTranslation: () => ({ t: (k: string) => k }),
@@ -11,6 +11,8 @@ const { getEngineVersion } = vi.hoisted(() => ({
 vi.mock('@/hooks/useServiceHub', () => ({
   useServiceHub: () => ({ models: () => ({ getEngineVersion }) }),
 }))
+const { openHelp } = vi.hoisted(() => ({ openHelp: vi.fn() }))
+vi.mock('@/lib/help', () => ({ openHelp }))
 
 import { LlamacppEngineInfo } from '../LlamacppEngineInfo'
 
@@ -61,11 +63,11 @@ describe('LlamacppEngineInfo', () => {
     expect(
       await screen.findByText(/engineOtherVersion$/)
     ).toBeInTheDocument()
-    expect(
-      screen.getByRole('link', { name: /engineOtherVersionLink/ })
-    ).toHaveAttribute(
-      'href',
-      'https://jan.ai/docs/desktop/remote-models/custom-endpoint#use-a-different-llamacpp-version'
+    fireEvent.click(
+      screen.getByRole('button', { name: /engineOtherVersionLink/ })
+    )
+    expect(openHelp).toHaveBeenCalledWith(
+      'desktop/remote-models/custom-endpoint.html#use-a-different-llamacpp-version'
     )
   })
 

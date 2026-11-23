@@ -106,6 +106,7 @@ For those who enjoy the scenic route:
 - Yarn ≥ 4.5.3
 - Make ≥ 3.81
 - Rust (for Tauri)
+- (Windows only) A CHM compiler for the offline help file: Microsoft HTML Help Workshop (`hhc.exe`) or Free Pascal's `chmcmd`
 - (macOS Apple Silicon only) MetalToolchain `xcodebuild -downloadComponent MetalToolchain`
 
 ### Run with Make

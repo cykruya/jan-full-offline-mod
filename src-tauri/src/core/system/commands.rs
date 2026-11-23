@@ -913,6 +913,16 @@ pub fn relaunch<R: Runtime>(app: AppHandle<R>) {
     app.restart()
 }
 
+/// Opens the bundled help file in the Windows help viewer, at `topic` (a page
+/// path inside the file, e.g. `desktop/quickstart.html`).
+#[tauri::command]
+pub fn open_help<R: Runtime>(app: AppHandle<R>, topic: String) -> Result<(), String> {
+    let resources = app.path().resource_dir().map_err(|e| e.to_string())?;
+    let help = resources.join("resources").join("help").join("Jan.chm");
+    let target = format!("{}::/{topic}", help.display());
+    std::process::Command::new("hh.exe").arg(target).spawn().map(|_| ()).map_err(|e| format!("open_help error: {e}"))
+}
+
 #[tauri::command]
 pub async fn read_logs<R: Runtime>(app: AppHandle<R>) -> Result<String, String> {
     let log_path = get_jan_data_folder_path(app).join("logs").join("app.log");
