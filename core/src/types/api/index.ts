@@ -104,6 +104,7 @@ export enum DownloadRoute {
 }
 export enum FileManagerRoute {
   copyFile = 'copyFile',
+  copyBundledModel = 'copyBundledModel',
   getJanDataFolderPath = 'getJanDataFolderPath',
   getResourcePath = 'getResourcePath',
   getUserHomePath = 'getUserHomePath',

@@ -74,6 +74,7 @@ vi.mock('@janhq/core', () => ({
     fileStat: vi.fn(),
     mkdir: vi.fn(),
     rm: vi.fn(),
+    copyBundledModel: vi.fn(),
     readYaml: vi.fn(),
     writeYaml: vi.fn(),
   },

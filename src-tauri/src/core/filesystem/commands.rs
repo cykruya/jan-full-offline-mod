@@ -8,8 +8,8 @@ use super::helpers::{
 use super::models::{DialogOpenOptions, FileStat};
 use rfd::AsyncFileDialog;
 use std::fs;
-use std::path::PathBuf;
-use tauri::Runtime;
+use std::path::{Path, PathBuf};
+use tauri::{Manager, Runtime};
 
 #[tauri::command]
 pub fn rm<R: Runtime>(app_handle: tauri::AppHandle<R>, args: Vec<String>) -> Result<(), String> {
@@ -62,6 +62,31 @@ pub fn mv<R: Runtime>(app_handle: tauri::AppHandle<R>, args: Vec<String>) -> Res
     }
 
     fs::rename(&source, &destination).map_err(|e| e.to_string())
+}
+
+/// Copies a model shipped in the app's `resources/models` folder to `dest`
+/// inside the Jan data folder. The web view reads nothing outside the data
+/// folder, so this is how it installs a model the app carries.
+#[tauri::command]
+pub fn copy_bundled_model<R: Runtime>(
+    app_handle: tauri::AppHandle<R>,
+    name: String,
+    dest: String,
+) -> Result<(), String> {
+    if Path::new(&name).file_name().and_then(|n| n.to_str()) != Some(name.as_str()) {
+        return Err(format!("copy_bundled_model error: {name} is not a file name"));
+    }
+
+    let resources = app_handle.path().resource_dir().map_err(|e| e.to_string())?;
+    let source = resources.join("resources/models").join(&name);
+    let (_, destination) = resolve_app_path_within_jan_data_folder(app_handle, &dest)?;
+    if let Some(parent) = destination.parent() {
+        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+
+    fs::copy(&source, &destination)
+        .map(|_| ())
+        .map_err(|e| format!("copy_bundled_model error: {}: {e}", source.display()))
 }
 
 #[tauri::command]

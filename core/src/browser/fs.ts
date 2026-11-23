@@ -71,6 +71,12 @@ const copyFile: (src: string, dest: string) => Promise<void> = (src, dest) =>
   globalThis.core.api?.copyFile(src, dest)
 
 /**
+ * Copies a model shipped with the app to `dest`, a path in the Jan data folder.
+ */
+const copyBundledModel: (name: string, dest: string) => Promise<void> = (name, dest) =>
+  globalThis.core.api?.copyBundledModel({ name, dest })
+
+/**
  * Gets the list of gguf files in a directory
  *
  * @param path - The paths to the file.
@@ -131,6 +137,7 @@ export const fs = {
   unlinkSync,
   appendFileSync,
   copyFile,
+  copyBundledModel,
   fileStat,
   writeBlob,
   getGgufFiles,

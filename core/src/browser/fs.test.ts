@@ -15,6 +15,7 @@ describe('fs module', () => {
         unlinkSync: vi.fn(),
         appendFileSync: vi.fn(),
         copyFile: vi.fn(),
+        copyBundledModel: vi.fn(),
         getGgufFiles: vi.fn(),
         fileStat: vi.fn(),
         readYaml: vi.fn(),
@@ -84,6 +85,11 @@ describe('fs module', () => {
     const dest = 'path/to/dest'
     await fs.copyFile(src, dest)
     expect(globalThis.core.api.copyFile).toHaveBeenCalledWith(src, dest)
+  })
+
+  it('should call copyBundledModel with correct arguments', async () => {
+    await fs.copyBundledModel('model.gguf', 'llamacpp/models/m/model.gguf')
+    expect(globalThis.core.api.copyBundledModel).toHaveBeenCalledWith({ name: 'model.gguf', dest: 'llamacpp/models/m/model.gguf' })
   })
 
   it('should call getGgufFiles with correct arguments', async () => {

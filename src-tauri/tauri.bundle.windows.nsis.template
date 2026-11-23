@@ -938,6 +938,11 @@ Section Install
     ; CUDA runtime, present only in a cuda variant (stage-engine.sh).
     File /nonfatal /a "jan_workspace\src-tauri\resources\bin\cudart64_*.dll"
     File /nonfatal /a "jan_workspace\src-tauri\resources\bin\cublas*.dll"
+    ; The embedding model installed on first launch. Fatal for the same reason
+    ; as the engine: nothing downloads it later.
+    CreateDirectory "$INSTDIR\resources\models"
+    SetOutPath "$INSTDIR\resources\models"
+    File /a "jan_workspace\src-tauri\resources\models\sentence-transformer-mini.gguf"
     SetOutPath $INSTDIR
 
   ; Copy external binaries

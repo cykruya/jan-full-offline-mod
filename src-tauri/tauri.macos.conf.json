@@ -42,6 +42,7 @@
     ],
     "resources": [
       "resources/LICENSE",
+      "resources/models/sentence-transformer-mini.gguf",
       "resources/bin/mlx-server",
       "resources/bin/mlx-swift_Cmlx.bundle",
       "resources/bin/jan-llama-worker",

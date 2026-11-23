@@ -41,6 +41,7 @@
     ],
     "resources": [
       "resources/LICENSE",
+      "resources/models/sentence-transformer-mini.gguf",
       "resources/bin/jan-llama-worker.exe",
       "resources/bin/*.dll"
     ],

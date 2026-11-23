@@ -1,11 +1,21 @@
 // scripts/download.js
 import https from 'https'
+import crypto from 'crypto'
 import fs, { copyFile, mkdirSync } from 'fs'
 import os from 'os'
 import path from 'path'
 import unzipper from 'unzipper'
 import * as tar from 'tar'
 import { copySync } from 'cpx'
+
+// The embedding model the app installs on first launch. It ships inside the
+// installer, so it is pinned by commit and checked against its hash.
+const EMBEDDER_URL =
+  'https://huggingface.co/second-state/All-MiniLM-L6-v2-Embedding-GGUF/resolve/544f204f2eaa2d71361ffc74d6df7170285b286a/all-MiniLM-L6-v2-ggml-model-f16.gguf'
+const EMBEDDER_SHA256 = '797b70c4edf85907fe0a49eb85811256f65fa0f7bf52166b147fd16be2be4662'
+const EMBEDDER_PATH = 'src-tauri/resources/models/sentence-transformer-mini.gguf'
+
+const sha256 = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
 
 function download(url, dest) {
   return new Promise((resolve, reject) => {
@@ -406,6 +416,14 @@ async function main() {
   } catch (err) {
     console.log('sqlite-vec download step failed (non-fatal):', err)
   }
+
+  // ----- embedding model (required: there is no runtime download) -----
+  if (!fs.existsSync(EMBEDDER_PATH) || sha256(EMBEDDER_PATH) !== EMBEDDER_SHA256) {
+    mkdirSync(path.dirname(EMBEDDER_PATH), { recursive: true })
+    await download(EMBEDDER_URL, EMBEDDER_PATH)
+    if (sha256(EMBEDDER_PATH) !== EMBEDDER_SHA256) throw new Error(`${EMBEDDER_PATH} does not match its pinned hash`)
+  }
+  console.log('Embedding model ready.')
 
   console.log('Downloads completed.')
 }

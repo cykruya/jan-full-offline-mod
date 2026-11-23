@@ -109,6 +109,31 @@ fn test_write_file_sync_rejects_path_outside_jan_data_folder() {
 }
 
 #[test]
+fn test_copy_bundled_model() {
+    let app = mock_app();
+    let models = app.path().resource_dir().unwrap().join("resources/models");
+    fs::create_dir_all(&models).unwrap();
+    fs::write(models.join("test-bundled.gguf"), b"GGUF").unwrap();
+    let data = get_jan_data_folder_path(app.handle().clone());
+    let copy = |name: &str, dest: &str| copy_bundled_model(app.handle().clone(), name.into(), dest.into());
+
+    assert!(copy("test-bundled.gguf", "test_copy_bundled/model.gguf").is_ok());
+    assert_eq!(fs::read(data.join("test_copy_bundled/model.gguf")).unwrap(), b"GGUF");
+
+    // Only a file from `resources/models` can be named, and only a path in the
+    // data folder can receive it.
+    assert!(copy("../test-bundled.gguf", "test_copy_bundled/a.gguf").is_err());
+    assert!(copy("models/test-bundled.gguf", "test_copy_bundled/b.gguf").is_err());
+    let outside = unique_test_dir("copy-bundled-outside").join("model.gguf");
+    assert!(copy("test-bundled.gguf", &outside.to_string_lossy()).is_err());
+    assert!(!outside.exists());
+    assert!(copy("missing.gguf", "test_copy_bundled/c.gguf").is_err());
+
+    let _ = fs::remove_dir_all(data.join("test_copy_bundled"));
+    let _ = fs::remove_file(models.join("test-bundled.gguf"));
+}
+
+#[test]
 fn test_join_path() {
     let app = mock_app();
     let path = "file://test_dir";

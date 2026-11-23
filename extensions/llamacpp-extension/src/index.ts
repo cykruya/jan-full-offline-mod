@@ -182,8 +182,8 @@ const EMBEDDER_BOOTSTRAP_KEY = 'llamacpp-embedder-bootstrapped'
 /** Set once the user has agreed to the first-run download. */
 const SETUP_CONSENT_KEY = 'llamacpp-first-run-setup-started'
 const FALLBACK_EMBEDDING_MODEL_ID = 'sentence-transformer-mini'
-const FALLBACK_EMBEDDING_MODEL_URL =
- 'https://huggingface.co/second-state/All-MiniLM-L6-v2-Embedding-GGUF/resolve/main/all-MiniLM-L6-v2-ggml-model-f16.gguf?download=true'
+/** Its copy in the app's `resources/models` folder (scripts/download-bin.mjs). */
+const FALLBACK_EMBEDDING_MODEL_FILE = 'sentence-transformer-mini.gguf'
 const LLAMACPP_MODEL_SETTINGS_BACKFILL_KEY =
  'llamacpp_model_yaml_backfill_v2'
 
@@ -601,9 +601,7 @@ export default class llamacpp_extension extends AIEngine implements EmbeddingEng
     // Set only around the actual fetch, and only when there is one to do:
     // an install that is already present must not flash a pending state.
     this.embedderBootstrapping = true
-    await this.import(FALLBACK_EMBEDDING_MODEL_ID, {
-     modelPath: FALLBACK_EMBEDDING_MODEL_URL,
-    })
+    await this.importFallbackEmbedder()
     // A stopped or cancelled download resolves without throwing, so the
     // install has to be confirmed before the one-shot flag is recorded --
     // otherwise bootstrap marks itself done and never retries.
@@ -629,6 +627,17 @@ export default class llamacpp_extension extends AIEngine implements EmbeddingEng
    // "downloading" for the rest of the session.
    this.embedderBootstrapping = false
   }
+ }
+
+ /**
+  * Installs the fallback embedder from the copy shipped with the app. The file
+  * goes where a download used to save it, so `model.yml` names a path inside
+  * the data folder and keeps working when the app is installed elsewhere.
+  */
+ private async importFallbackEmbedder(): Promise<void> {
+  const modelPath = `${this.providerId}/models/${FALLBACK_EMBEDDING_MODEL_ID}/model.gguf`
+  await fs.copyBundledModel(FALLBACK_EMBEDDING_MODEL_FILE, modelPath)
+  await this.import(FALLBACK_EMBEDDING_MODEL_ID, { modelPath })
  }
 
  private async hasEmbedderInstalled(): Promise<boolean> {
@@ -3044,9 +3053,7 @@ export default class llamacpp_extension extends AIEngine implements EmbeddingEng
   let sInfo = await this.findSessionByModel(targetModelId)
   if (!sInfo) {
    if (targetModelId === FALLBACK_EMBEDDING_MODEL_ID && !hasMini) {
-    await this.import(FALLBACK_EMBEDDING_MODEL_ID, {
-     modelPath: FALLBACK_EMBEDDING_MODEL_URL,
-    })
+    await this.importFallbackEmbedder()
    }
    sInfo = await this.load(targetModelId, undefined, true)
   }

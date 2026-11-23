@@ -39,6 +39,7 @@ const triple = execFileSync('rustc', ['-vV'], { encoding: 'utf8' })
 
 for (const dir of [
   'src-tauri/resources/bin',
+  'src-tauri/resources/models',
   'src-tauri/icons',
   'src-tauri/icons-macos',
   'src-tauri/icons-windows',
@@ -48,6 +49,7 @@ for (const dir of [
 }
 
 touch(path('src-tauri/resources/LICENSE'))
+touch(path('src-tauri/resources/models/sentence-transformer-mini.gguf'))
 touch(path('web-app/dist/index.html'))
 
 // The executable suffix, and the ggml runtime that ships beside the engine

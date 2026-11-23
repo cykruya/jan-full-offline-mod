@@ -1111,17 +1111,22 @@ describe('bootstrapDefaultEmbedder', () => {
     await extension['bootstrapDefaultEmbedder']()
 
     expect(list).toHaveBeenCalled()
-    expect(importSpy).toHaveBeenCalledWith(
-      'sentence-transformer-mini',
-      expect.objectContaining({ modelPath: expect.stringContaining('MiniLM') })
+    // The copy shipped with the app lands where a download used to save it,
+    // and that data-folder path is what gets imported.
+    expect(fs.copyBundledModel).toHaveBeenCalledWith(
+      'sentence-transformer-mini.gguf',
+      'llamacpp/models/sentence-transformer-mini/model.gguf'
     )
+    expect(importSpy).toHaveBeenCalledWith('sentence-transformer-mini', {
+      modelPath: 'llamacpp/models/sentence-transformer-mini/model.gguf',
+    })
     expect(setBackendSetting).toHaveBeenCalledWith(
       'llamacpp-embedder-bootstrapped',
       'true'
     )
   })
 
-  it('skips the download when an embedder is already installed but still marks done', async () => {
+  it('skips the install when an embedder is already installed but still marks done', async () => {
     vi.mocked(getBackendSetting).mockResolvedValue(null)
     vi.spyOn(extension, 'list').mockResolvedValue([
       { id: 'custom-embedder', embedding: true },
@@ -1130,6 +1135,7 @@ describe('bootstrapDefaultEmbedder', () => {
 
     await extension['bootstrapDefaultEmbedder']()
 
+    expect(fs.copyBundledModel).not.toHaveBeenCalled()
     expect(importSpy).not.toHaveBeenCalled()
     expect(setBackendSetting).toHaveBeenCalledWith(
       'llamacpp-embedder-bootstrapped',
@@ -1147,14 +1153,16 @@ describe('bootstrapDefaultEmbedder', () => {
     expect(setBackendSetting).not.toHaveBeenCalled()
   })
 
-  it('does not mark done when the download fails, so it retries next launch', async () => {
+  it('does not mark done when the install fails, so it retries next launch', async () => {
     vi.mocked(getBackendSetting).mockResolvedValue(null)
     vi.spyOn(extension, 'list').mockResolvedValue([] as never)
-    vi.spyOn(extension, 'import').mockRejectedValue(new Error('offline'))
+    vi.mocked(fs.copyBundledModel).mockRejectedValueOnce(new Error('not bundled'))
+    const importSpy = vi.spyOn(extension, 'import')
 
     await expect(
       extension['bootstrapDefaultEmbedder']()
     ).resolves.toBeUndefined()
+    expect(importSpy).not.toHaveBeenCalled()
     expect(setBackendSetting).not.toHaveBeenCalled()
   })
 })
