@@ -18,6 +18,7 @@
 //! output size so tool results can't blow up the model's context.
 
 use async_trait::async_trait;
+use base64::Engine;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
@@ -26,14 +27,12 @@ pub const SEARCH_DEFAULT_COUNT: u32 = 5;
 pub const SEARCH_MAX_COUNT: u32 = 20;
 const REQUEST_TIMEOUT_SECS: u64 = 30;
 
-const EXA_HOSTED_URL: &str = "https://mcp.exa.ai/mcp";
-const EXA_REST_SEARCH_URL: &str = "https://api.exa.ai/search";
-const EXA_REST_CONTENTS_URL: &str = "https://api.exa.ai/contents";
+const EXA_HOSTED_URL: &str = "https://mcp.exa.ai";
+const EXA_REST_URL: &str = "https://api.exa.ai";
 
-const TAVILY_SEARCH_URL: &str = "https://api.tavily.com/search";
-const TAVILY_EXTRACT_URL: &str = "https://api.tavily.com/extract";
+const TAVILY_URL: &str = "https://api.tavily.com";
 
-const YOU_COM_HOSTED_URL: &str = "https://api.you.com/mcp?profile=free";
+const YOU_COM_HOSTED_URL: &str = "https://api.you.com";
 // Identifies the calling application to You.com, per the convention its other
 // integrations follow. Carries no user or query data beyond the request itself,
 // and is sent only on requests to You.com.
@@ -47,9 +46,7 @@ const YOU_COM_CLIENT_INFO: &str = concat!(
     env!("CARGO_PKG_VERSION"),
     "; ua=rust/unknown"
 );
-const YOU_COM_SEARCH_URL: &str = "https://ydc-index.io/v1/search";
-const YOU_COM_CONTENTS_URL: &str = "https://ydc-index.io/v1/contents";
-const YOU_COM_EXTRACT_URL: &str = "https://api.you.com/v1/extract";
+const YOU_COM_REST_URL: &str = "https://ydc-index.io";
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SearchResult {
@@ -123,6 +120,10 @@ pub const PROVIDERS: &[ProviderMeta] = &[
         secret_key: Some("you-api-key"),
         requires_endpoint: false,
     },
+    ProviderMeta { id: "yacy", label: "YaCy", keyless: true, secret_key: None, requires_endpoint: true },
+    ProviderMeta { id: "duckduckgo", label: "DuckDuckGo", keyless: true, secret_key: None, requires_endpoint: true },
+    ProviderMeta { id: "bing", label: "Bing", keyless: true, secret_key: None, requires_endpoint: true },
+    ProviderMeta { id: "yandex", label: "Yandex", keyless: false, secret_key: Some("yandex-api-key"), requires_endpoint: true },
 ];
 
 /// Look up a backend by id (case-insensitive; empty/absent is the default).
@@ -166,24 +167,45 @@ impl WebSearchConfig {
 }
 
 /// Build the backend for `provider` (case-insensitive; empty/absent selects the
-/// default). `api_key` is used by keyed backends; `endpoint` by self-hosted ones
-/// (e.g. a SearXNG instance URL).
+/// default). `api_key` is used by keyed backends. `endpoint` is the base
+/// address the backend talks to: Exa, Tavily and You.com fall back to their
+/// public one, every other backend requires it.
 pub fn create_provider(
     provider: Option<&str>,
     api_key: Option<String>,
     endpoint: Option<String>,
 ) -> Result<Box<dyn SearchProvider>, String> {
     match provider.map(|s| s.trim().to_ascii_lowercase()).as_deref() {
-        None | Some("") | Some("exa") => Ok(Box::new(ExaProvider::new(api_key)?)),
-        Some("tavily") => Ok(Box::new(TavilyProvider::new(api_key)?)),
+        None | Some("") | Some("exa") => Ok(Box::new(ExaProvider::new(api_key, endpoint)?)),
+        Some("tavily") => Ok(Box::new(TavilyProvider::new(api_key, endpoint)?)),
         Some("searxng") => Ok(Box::new(SearxngProvider::new(endpoint)?)),
-        Some("you") => Ok(Box::new(YouComProvider::new(api_key)?)),
+        Some("you") => Ok(Box::new(YouComProvider::new(api_key, endpoint)?)),
+        Some("yacy") => Ok(Box::new(YacyProvider::new(endpoint)?)),
+        Some("duckduckgo") => Ok(Box::new(DuckDuckGoProvider::new(endpoint)?)),
+        Some("bing") => Ok(Box::new(BingProvider::new(endpoint)?)),
+        Some("yandex") => Ok(Box::new(YandexProvider::new(api_key, endpoint)?)),
         Some(other) => Err(format!("Unknown web search provider '{other}'")),
     }
 }
 
 fn require_key(provider: &str, api_key: Option<String>) -> Result<String, String> {
     normalize_key(api_key).ok_or_else(|| format!("{provider} requires an API key"))
+}
+
+/// The base address a backend sends its requests to, without a trailing slash.
+/// `None` when no address was given.
+fn normalize_endpoint(provider: &str, endpoint: Option<String>) -> Result<Option<String>, String> {
+    let Some(base) = endpoint.map(|e| e.trim().trim_end_matches('/').to_string()).filter(|e| !e.is_empty()) else {
+        return Ok(None);
+    };
+    if !(base.starts_with("http://") || base.starts_with("https://")) {
+        return Err(format!("{provider} address must be an http(s) URL, got: {base}"));
+    }
+    Ok(Some(base))
+}
+
+fn require_endpoint(provider: &str, endpoint: Option<String>) -> Result<String, String> {
+    normalize_endpoint(provider, endpoint)?.ok_or_else(|| format!("{provider} requires an address"))
 }
 
 fn build_http_client(provider: &str) -> Result<reqwest::Client, String> {
@@ -215,20 +237,22 @@ fn normalize_key(api_key: Option<String>) -> Option<String> {
 /// structured REST API when a key is supplied.
 pub struct ExaProvider {
     mode: ExaMode,
+    base_url: String,
     client: reqwest::Client,
 }
 
 impl ExaProvider {
-    pub fn new(api_key: Option<String>) -> Result<Self, String> {
-        let mode = match normalize_key(api_key) {
-            Some(key) => ExaMode::Rest(key),
-            None => ExaMode::Hosted,
+    pub fn new(api_key: Option<String>, endpoint: Option<String>) -> Result<Self, String> {
+        let (mode, default_url) = match normalize_key(api_key) {
+            Some(key) => (ExaMode::Rest(key), EXA_REST_URL),
+            None => (ExaMode::Hosted, EXA_HOSTED_URL),
         };
+        let base_url = normalize_endpoint("Exa", endpoint)?.unwrap_or_else(|| default_url.to_string());
         let client = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(REQUEST_TIMEOUT_SECS))
             .build()
             .map_err(|e| format!("failed to build HTTP client for Exa: {e}"))?;
-        Ok(Self { mode, client })
+        Ok(Self { mode, base_url, client })
     }
 
     async fn hosted_call(&self, tool: &str, arguments: Value) -> Result<String, String> {
@@ -240,7 +264,7 @@ impl ExaProvider {
         });
         let resp = self
             .client
-            .post(EXA_HOSTED_URL)
+            .post(format!("{}/mcp", self.base_url))
             .header("content-type", "application/json")
             .header("accept", "application/json, text/event-stream")
             .json(&body)
@@ -288,7 +312,7 @@ impl SearchProvider for ExaProvider {
                 });
                 let resp = self
                     .client
-                    .post(EXA_REST_SEARCH_URL)
+                    .post(format!("{}/search", self.base_url))
                     .header("x-api-key", key)
                     .header("content-type", "application/json")
                     .json(&body)
@@ -329,7 +353,7 @@ impl SearchProvider for ExaProvider {
                 let body = json!({ "ids": [url], "text": true });
                 let resp = self
                     .client
-                    .post(EXA_REST_CONTENTS_URL)
+                    .post(format!("{}/contents", self.base_url))
                     .header("x-api-key", key)
                     .header("content-type", "application/json")
                     .json(&body)
@@ -571,21 +595,23 @@ fn normalize_exa_rest_fetch(body: &Value, requested_url: &str) -> Result<Fetched
 /// REST endpoints, authenticated with a bearer token.
 pub struct TavilyProvider {
     api_key: String,
+    base_url: String,
     client: reqwest::Client,
 }
 
 impl TavilyProvider {
-    pub fn new(api_key: Option<String>) -> Result<Self, String> {
+    pub fn new(api_key: Option<String>, endpoint: Option<String>) -> Result<Self, String> {
         Ok(Self {
             api_key: require_key("Tavily", api_key)?,
+            base_url: normalize_endpoint("Tavily", endpoint)?.unwrap_or_else(|| TAVILY_URL.to_string()),
             client: build_http_client("Tavily")?,
         })
     }
 
-    async fn post(&self, url: &str, body: Value) -> Result<Value, String> {
+    async fn post(&self, path: &str, body: Value) -> Result<Value, String> {
         let resp = self
             .client
-            .post(url)
+            .post(format!("{}{path}", self.base_url))
             .bearer_auth(&self.api_key)
             .header("content-type", "application/json")
             .json(&body)
@@ -613,7 +639,7 @@ impl SearchProvider for TavilyProvider {
     async fn search(&self, query: &str, count: u32) -> Result<Vec<SearchResult>, String> {
         let parsed = self
             .post(
-                TAVILY_SEARCH_URL,
+                "/search",
                 json!({ "query": query, "max_results": count }),
             )
             .await?;
@@ -622,7 +648,7 @@ impl SearchProvider for TavilyProvider {
 
     async fn fetch(&self, url: &str) -> Result<FetchedPage, String> {
         let parsed = self
-            .post(TAVILY_EXTRACT_URL, json!({ "urls": [url] }))
+            .post("/extract", json!({ "urls": [url] }))
             .await?;
         normalize_tavily_extract(&parsed, url)
     }
@@ -713,17 +739,19 @@ enum YouComMode {
 /// both.
 pub struct YouComProvider {
     mode: YouComMode,
+    base_url: String,
     client: reqwest::Client,
 }
 
 impl YouComProvider {
-    pub fn new(api_key: Option<String>) -> Result<Self, String> {
-        let mode = match normalize_key(api_key) {
-            Some(key) => YouComMode::Rest(key),
-            None => YouComMode::Hosted,
+    pub fn new(api_key: Option<String>, endpoint: Option<String>) -> Result<Self, String> {
+        let (mode, default_url) = match normalize_key(api_key) {
+            Some(key) => (YouComMode::Rest(key), YOU_COM_REST_URL),
+            None => (YouComMode::Hosted, YOU_COM_HOSTED_URL),
         };
         Ok(Self {
             mode,
+            base_url: normalize_endpoint("You.com", endpoint)?.unwrap_or_else(|| default_url.to_string()),
             client: build_http_client("You.com")?,
         })
     }
@@ -757,7 +785,8 @@ impl YouComProvider {
     }
 
     /// Keyed transport: plain JSON POST authenticated with `X-API-Key`.
-    async fn post_rest(&self, url: &str, key: &str, body: Value) -> Result<Value, String> {
+    async fn post_rest(&self, path: &str, key: &str, body: Value) -> Result<Value, String> {
+        let url = format!("{}{path}", self.base_url);
         let text = self
             .send(self.client.post(url).header("X-API-Key", key).json(&body))
             .await?;
@@ -771,7 +800,7 @@ impl YouComProvider {
         let text = self
             .send(
                 self.client
-                    .post(YOU_COM_HOSTED_URL)
+                    .post(format!("{}/mcp?profile=free", self.base_url))
                     .header("accept", "application/json, text/event-stream")
                     .json(&json!({
                         "jsonrpc": "2.0",
@@ -789,7 +818,7 @@ impl YouComProvider {
     /// Keyless page extraction: a plain JSON POST with no credentials.
     fn extract_request(&self, url: &str) -> reqwest::RequestBuilder {
         self.client
-            .post(YOU_COM_EXTRACT_URL)
+            .post(format!("{}/v1/extract", self.base_url))
             .json(&json!({ "url": url }))
     }
 
@@ -824,7 +853,7 @@ impl SearchProvider for YouComProvider {
         let args = json!({ "query": query, "count": count });
         let parsed = match &self.mode {
             YouComMode::Hosted => self.hosted_search(args).await?,
-            YouComMode::Rest(key) => self.post_rest(YOU_COM_SEARCH_URL, key, args).await?,
+            YouComMode::Rest(key) => self.post_rest("/v1/search", key, args).await?,
         };
         Ok(normalize_youcom_search(&parsed))
     }
@@ -835,7 +864,7 @@ impl SearchProvider for YouComProvider {
             YouComMode::Rest(key) => {
                 let parsed = self
                     .post_rest(
-                        YOU_COM_CONTENTS_URL,
+                        "/v1/contents",
                         key,
                         json!({ "urls": [url], "formats": ["markdown"] }),
                     )
@@ -1003,17 +1032,8 @@ pub struct SearxngProvider {
 
 impl SearxngProvider {
     pub fn new(endpoint: Option<String>) -> Result<Self, String> {
-        let base = endpoint
-            .map(|e| e.trim().trim_end_matches('/').to_string())
-            .filter(|e| !e.is_empty())
-            .ok_or("SearXNG requires an instance URL")?;
-        if !(base.starts_with("http://") || base.starts_with("https://")) {
-            return Err(format!(
-                "SearXNG instance URL must be an http(s) URL, got: {base}"
-            ));
-        }
         Ok(Self {
-            base_url: base,
+            base_url: require_endpoint("SearXNG", endpoint)?,
             client: build_http_client("SearXNG")?,
         })
     }
@@ -1080,6 +1100,295 @@ fn normalize_searxng_search(body: &Value, count: u32) -> Vec<SearchResult> {
             }
         })
         .collect()
+}
+
+/// Send `request` and return the response body, turning a transport failure
+/// or an HTTP error status into the error shape the other backends use.
+async fn send_for_text(request: reqwest::RequestBuilder, provider: &str) -> Result<String, String> {
+    let resp = request.send().await.map_err(|e| format!("{provider} request failed: {e}"))?;
+    let status = resp.status();
+    let text = resp.text().await.map_err(|e| format!("{provider}: failed to read response body: {e}"))?;
+    if !status.is_success() {
+        return Err(format!("{provider} failed with HTTP {}: {}", status.as_u16(), clip_chars(&text, 400)));
+    }
+    Ok(text)
+}
+
+/// The text of an HTML fragment: tags dropped, character references decoded.
+fn html_text(fragment: &str) -> String {
+    dom_query::Document::fragment(fragment).text().to_string()
+}
+
+/// YaCy backend (self-hosted, key-less). Queries a peer's JSON search API.
+/// YaCy has no content-extraction endpoint, so `fetch` is a plain GET.
+pub struct YacyProvider {
+    base_url: String,
+    client: reqwest::Client,
+}
+
+impl YacyProvider {
+    pub fn new(endpoint: Option<String>) -> Result<Self, String> {
+        Ok(Self { base_url: require_endpoint("YaCy", endpoint)?, client: build_http_client("YaCy")? })
+    }
+}
+
+#[async_trait]
+impl SearchProvider for YacyProvider {
+    async fn search(&self, query: &str, count: u32) -> Result<Vec<SearchResult>, String> {
+        let request = self.client.get(format!("{}/yacysearch.json", self.base_url)).query(&[("query", query), ("maximumRecords", &count.to_string())]);
+        let text = send_for_text(request, "YaCy").await?;
+        let parsed: Value = serde_json::from_str(&text).map_err(|e| format!("YaCy: invalid JSON response: {e}"))?;
+        Ok(normalize_yacy_search(&parsed))
+    }
+
+    async fn fetch(&self, url: &str) -> Result<FetchedPage, String> {
+        fetch_url_direct(url, "YaCy").await
+    }
+}
+
+/// YaCy XML-escapes `link` and marks the matched words in `description` with
+/// `<b>`, so both are read as HTML text.
+fn normalize_yacy_search(body: &Value) -> Vec<SearchResult> {
+    let Some(items) = body.pointer("/channels/0/items").and_then(|v| v.as_array()) else {
+        return Vec::new();
+    };
+    items
+        .iter()
+        .map(|item| {
+            let field = |key: &str| item.get(key).and_then(|v| v.as_str()).unwrap_or("");
+            SearchResult {
+                title: field("title").to_string(),
+                url: html_text(field("link")),
+                snippet: clip_chars(&html_text(field("description")), 500),
+                published_at: Some(field("pubDate")).filter(|s| !s.is_empty()).map(str::to_string),
+            }
+        })
+        .collect()
+}
+
+/// DuckDuckGo backend (key-less). DuckDuckGo offers no search API, so this
+/// reads the result page of its script-free HTML site. `fetch` is a plain GET.
+pub struct DuckDuckGoProvider {
+    base_url: String,
+    client: reqwest::Client,
+}
+
+impl DuckDuckGoProvider {
+    pub fn new(endpoint: Option<String>) -> Result<Self, String> {
+        Ok(Self { base_url: require_endpoint("DuckDuckGo", endpoint)?, client: build_http_client("DuckDuckGo")? })
+    }
+}
+
+#[async_trait]
+impl SearchProvider for DuckDuckGoProvider {
+    async fn search(&self, query: &str, count: u32) -> Result<Vec<SearchResult>, String> {
+        let request = self.client.post(format!("{}/html/", self.base_url)).form(&[("q", query)]);
+        normalize_duckduckgo_search(&send_for_text(request, "DuckDuckGo").await?, count)
+    }
+
+    async fn fetch(&self, url: &str) -> Result<FetchedPage, String> {
+        fetch_url_direct(url, "DuckDuckGo").await
+    }
+}
+
+fn normalize_duckduckgo_search(html: &str, count: u32) -> Result<Vec<SearchResult>, String> {
+    let page = dom_query::Document::from(html);
+    if page.select("#challenge-form").exists() {
+        return Err("DuckDuckGo answered with a bot check instead of results".to_string());
+    }
+    let results = page.select(".result:not(.result--ad)");
+    Ok(results
+        .iter()
+        .filter_map(|result| {
+            let link = result.select(".result__title a");
+            let href = link.attr("href")?;
+            Some(SearchResult {
+                title: link.text().trim().to_string(),
+                url: duckduckgo_target(&href),
+                snippet: clip_chars(result.select(".result__snippet").text().trim(), 500),
+                published_at: None,
+            })
+        })
+        .take(count as usize)
+        .collect())
+}
+
+/// A result links to `//duckduckgo.com/l/?uddg=<target>`, a redirect page
+/// that carries the result's own address in `uddg`.
+fn duckduckgo_target(href: &str) -> String {
+    let absolute = if href.starts_with("//") { format!("https:{href}") } else { href.to_string() };
+    let target = reqwest::Url::parse(&absolute).ok().and_then(|url| url.query_pairs().find(|(key, _)| key == "uddg").map(|(_, value)| value.into_owned()));
+    target.unwrap_or(absolute)
+}
+
+/// Bing backend (key-less). Microsoft retired the Bing Search API, so this
+/// reads the RSS form of the result page, which holds one page of results
+/// whatever `count` asks for. `fetch` is a plain GET.
+pub struct BingProvider {
+    base_url: String,
+    client: reqwest::Client,
+}
+
+impl BingProvider {
+    pub fn new(endpoint: Option<String>) -> Result<Self, String> {
+        Ok(Self { base_url: require_endpoint("Bing", endpoint)?, client: build_http_client("Bing")? })
+    }
+}
+
+#[async_trait]
+impl SearchProvider for BingProvider {
+    async fn search(&self, query: &str, count: u32) -> Result<Vec<SearchResult>, String> {
+        let request = self.client.get(format!("{}/search", self.base_url)).query(&[("q", query), ("format", "rss")]);
+        normalize_bing_search(&send_for_text(request, "Bing").await?, count)
+    }
+
+    async fn fetch(&self, url: &str) -> Result<FetchedPage, String> {
+        fetch_url_direct(url, "Bing").await
+    }
+}
+
+#[derive(Deserialize)]
+struct BingRss {
+    channel: BingChannel,
+}
+
+#[derive(Deserialize)]
+struct BingChannel {
+    #[serde(default)]
+    item: Vec<BingItem>,
+}
+
+#[derive(Deserialize)]
+struct BingItem {
+    title: String,
+    link: String,
+    #[serde(default)]
+    description: String,
+    #[serde(rename = "pubDate")]
+    pub_date: Option<String>,
+}
+
+fn normalize_bing_search(xml: &str, count: u32) -> Result<Vec<SearchResult>, String> {
+    let rss: BingRss = quick_xml::de::from_str(xml).map_err(|e| format!("Bing: invalid RSS response: {e}"))?;
+    let items = rss.channel.item.into_iter().take(count as usize);
+    Ok(items.map(|item| SearchResult { title: item.title, url: item.link, snippet: clip_chars(&item.description, 500), published_at: item.pub_date }).collect())
+}
+
+/// Yandex backend (key-only). Uses the synchronous web search of Yandex
+/// Search API v2, which answers with a Base64-encoded XML document. Every
+/// request names the cloud folder the API key belongs to, so the key is
+/// entered as `<folder ID>:<API key>`. `fetch` is a plain GET.
+pub struct YandexProvider {
+    folder_id: String,
+    api_key: String,
+    base_url: String,
+    client: reqwest::Client,
+}
+
+impl YandexProvider {
+    pub fn new(api_key: Option<String>, endpoint: Option<String>) -> Result<Self, String> {
+        let key = require_key("Yandex", api_key)?;
+        let (folder_id, api_key) = key.split_once(':').ok_or("Yandex needs its key entered as <folder ID>:<API key>")?;
+        Ok(Self {
+            folder_id: folder_id.to_string(),
+            api_key: api_key.to_string(),
+            base_url: require_endpoint("Yandex", endpoint)?,
+            client: build_http_client("Yandex")?,
+        })
+    }
+}
+
+#[async_trait]
+impl SearchProvider for YandexProvider {
+    async fn search(&self, query: &str, count: u32) -> Result<Vec<SearchResult>, String> {
+        let body = json!({
+            "query": { "searchType": "SEARCH_TYPE_COM", "queryText": query },
+            "groupSpec": { "groupMode": "GROUP_MODE_FLAT", "groupsOnPage": count.to_string(), "docsInGroup": "1" },
+            "folderId": self.folder_id,
+            "responseFormat": "FORMAT_XML"
+        });
+        let request = self.client.post(format!("{}/v2/web/search", self.base_url)).header("Authorization", format!("Api-Key {}", self.api_key)).json(&body);
+        let text = send_for_text(request, "Yandex").await?;
+        let parsed: Value = serde_json::from_str(&text).map_err(|e| format!("Yandex: invalid JSON response: {e}"))?;
+        let raw = parsed.get("rawData").and_then(|v| v.as_str()).ok_or("Yandex: the response has no rawData")?;
+        let xml = base64::engine::general_purpose::STANDARD.decode(raw).map_err(|e| format!("Yandex: rawData is not Base64: {e}"))?;
+        normalize_yandex_search(&String::from_utf8_lossy(&xml))
+    }
+
+    async fn fetch(&self, url: &str) -> Result<FetchedPage, String> {
+        fetch_url_direct(url, "Yandex").await
+    }
+}
+
+#[derive(Deserialize)]
+struct YandexSearch {
+    response: YandexResponse,
+}
+
+#[derive(Deserialize)]
+struct YandexResponse {
+    error: Option<YandexError>,
+    results: Option<YandexResults>,
+}
+
+#[derive(Deserialize)]
+struct YandexError {
+    #[serde(rename = "@code")]
+    code: u32,
+    #[serde(rename = "$text", default)]
+    message: String,
+}
+
+#[derive(Deserialize)]
+struct YandexResults {
+    grouping: YandexGrouping,
+}
+
+#[derive(Deserialize)]
+struct YandexGrouping {
+    #[serde(default)]
+    group: Vec<YandexGroup>,
+}
+
+#[derive(Deserialize)]
+struct YandexGroup {
+    #[serde(default)]
+    doc: Vec<YandexDoc>,
+}
+
+#[derive(Deserialize)]
+struct YandexDoc {
+    url: String,
+    #[serde(default)]
+    title: String,
+    headline: Option<String>,
+    passages: Option<YandexPassages>,
+    modtime: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct YandexPassages {
+    #[serde(default)]
+    passage: Vec<String>,
+}
+
+/// Titles and passages wrap the matched words in `<hlword>`; with the tags
+/// removed they are plain text. Error 15 is how Yandex says "no results".
+fn normalize_yandex_search(xml: &str) -> Result<Vec<SearchResult>, String> {
+    let xml = xml.replace("<hlword>", "").replace("</hlword>", "");
+    let parsed: YandexSearch = quick_xml::de::from_str(&xml).map_err(|e| format!("Yandex: invalid XML response: {e}"))?;
+    if let Some(error) = parsed.response.error.filter(|error| error.code != 15) {
+        return Err(format!("Yandex error {}: {}", error.code, error.message));
+    }
+    let groups = parsed.response.results.map(|results| results.grouping.group).unwrap_or_default();
+    Ok(groups
+        .into_iter()
+        .flat_map(|group| group.doc)
+        .map(|doc| {
+            let snippet = doc.passages.map(|p| p.passage.join(" ")).or(doc.headline).unwrap_or_default();
+            SearchResult { title: doc.title, url: doc.url, snippet: clip_chars(&snippet, 500), published_at: doc.modtime }
+        })
+        .collect())
 }
 
 /// Fetch a URL directly and return its bounded body, titled from its `<title>`.
@@ -1288,17 +1597,17 @@ mod tests {
 
     #[test]
     fn empty_key_selects_hosted() {
-        let p = ExaProvider::new(None).unwrap();
+        let p = ExaProvider::new(None, None).unwrap();
         assert_eq!(p.mode, ExaMode::Hosted);
-        let p = ExaProvider::new(Some("  ".into())).unwrap();
+        let p = ExaProvider::new(Some("  ".into()), None).unwrap();
         assert_eq!(p.mode, ExaMode::Hosted);
-        let p = ExaProvider::new(Some("YOUR_EXA_API_KEY_HERE".into())).unwrap();
+        let p = ExaProvider::new(Some("YOUR_EXA_API_KEY_HERE".into()), None).unwrap();
         assert_eq!(p.mode, ExaMode::Hosted);
     }
 
     #[test]
     fn real_key_selects_rest() {
-        let p = ExaProvider::new(Some("abc123".into())).unwrap();
+        let p = ExaProvider::new(Some("abc123".into()), None).unwrap();
         assert_eq!(p.mode, ExaMode::Rest("abc123".into()));
     }
 
@@ -1371,7 +1680,7 @@ mod tests {
     #[test]
     fn every_listed_provider_is_constructible() {
         for meta in PROVIDERS {
-            let key = (!meta.keyless).then(|| "k".to_string());
+            let key = (!meta.keyless).then(|| "f:k".to_string());
             let endpoint = meta.requires_endpoint.then(|| "https://x.example".to_string());
             assert!(
                 create_provider(Some(meta.id), key, endpoint).is_ok(),
@@ -1676,10 +1985,10 @@ mod tests {
         // rejects with HTTP 415 ("Content-Type must be application/json").
         let body = json!({ "jsonrpc": "2.0", "id": 1, "method": "tools/call" });
         let req = with_youcom_headers(
-            YouComProvider::new(None)
+            YouComProvider::new(None, None)
                 .unwrap()
                 .client
-                .post(YOU_COM_HOSTED_URL)
+                .post(format!("{YOU_COM_HOSTED_URL}/mcp?profile=free"))
                 .header("accept", "application/json, text/event-stream")
                 .json(&body),
         )
@@ -1696,13 +2005,13 @@ mod tests {
 
     #[test]
     fn youcom_key_selects_transport() {
-        assert_eq!(YouComProvider::new(None).unwrap().mode, YouComMode::Hosted);
+        assert_eq!(YouComProvider::new(None, None).unwrap().mode, YouComMode::Hosted);
         assert_eq!(
-            YouComProvider::new(Some("   ".into())).unwrap().mode,
+            YouComProvider::new(Some("   ".into()), None).unwrap().mode,
             YouComMode::Hosted
         );
         assert_eq!(
-            YouComProvider::new(Some("ydc-key".into())).unwrap().mode,
+            YouComProvider::new(Some("ydc-key".into()), None).unwrap().mode,
             YouComMode::Rest("ydc-key".into())
         );
     }
@@ -1907,14 +2216,14 @@ mod tests {
     fn youcom_extract_request_shape() {
         // Built the way `send_raw` sends it.
         let req = with_youcom_headers(
-            YouComProvider::new(None)
+            YouComProvider::new(None, None)
                 .unwrap()
                 .extract_request("https://example.com"),
         )
         .build()
         .unwrap();
         assert_eq!(req.method(), reqwest::Method::POST);
-        assert_eq!(req.url().as_str(), YOU_COM_EXTRACT_URL);
+        assert_eq!(req.url().as_str(), "https://api.you.com/v1/extract");
         let body: Value =
             serde_json::from_slice(req.body().and_then(|b| b.as_bytes()).unwrap()).unwrap();
         assert_eq!(body, json!({ "url": "https://example.com" }));
@@ -2069,13 +2378,209 @@ mod tests {
         assert!(noted.truncated);
     }
 
+    #[test]
+    fn an_address_replaces_the_built_in_one() {
+        assert_eq!(ExaProvider::new(None, None).unwrap().base_url, EXA_HOSTED_URL);
+        assert_eq!(ExaProvider::new(Some("k".into()), None).unwrap().base_url, EXA_REST_URL);
+        assert_eq!(ExaProvider::new(None, Some(" https://exa.example/ ".into())).unwrap().base_url, "https://exa.example");
+        assert_eq!(TavilyProvider::new(Some("k".into()), None).unwrap().base_url, TAVILY_URL);
+        assert_eq!(TavilyProvider::new(Some("k".into()), Some("https://tavily.example".into())).unwrap().base_url, "https://tavily.example");
+        assert_eq!(YouComProvider::new(None, None).unwrap().base_url, YOU_COM_HOSTED_URL);
+        assert_eq!(YouComProvider::new(Some("k".into()), None).unwrap().base_url, YOU_COM_REST_URL);
+        assert_eq!(YouComProvider::new(None, Some("https://you.example".into())).unwrap().base_url, "https://you.example");
+        assert!(ExaProvider::new(None, Some("exa.example".into())).is_err());
+    }
+
+    #[test]
+    fn the_added_backends_require_an_address() {
+        for id in ["yacy", "duckduckgo", "bing", "yandex"] {
+            let err = create_provider(Some(id), Some("f:k".into()), None).err().expect(id);
+            assert!(err.contains("requires an address"), "{err}");
+        }
+    }
+
+    #[test]
+    fn yandex_key_names_the_folder() {
+        let address = || Some("https://yandex.example".to_string());
+        let p = YandexProvider::new(Some("b1gfolder:AQVNkey".into()), address()).unwrap();
+        assert_eq!((p.folder_id.as_str(), p.api_key.as_str()), ("b1gfolder", "AQVNkey"));
+        let err = YandexProvider::new(Some("AQVNkey".into()), address()).err().unwrap();
+        assert!(err.contains("<folder ID>:<API key>"), "{err}");
+    }
+
+    #[test]
+    fn normalize_yacy_search_maps_contract() {
+        let body = json!({
+            "channels": [{
+                "totalResults": "2",
+                "items": [
+                    {
+                        "title": "Rust",
+                        "link": "https://a.example/?x=1&amp;y=2",
+                        "description": "A <b>language</b> empowering &lt;everyone&gt;",
+                        "pubDate": "Mon, 06 Oct 2025 14:08:07 +0000"
+                    },
+                    { "title": "Bare", "link": "https://b.example/", "description": "", "pubDate": "" }
+                ]
+            }]
+        });
+        let results = normalize_yacy_search(&body);
+        assert_eq!(results.len(), 2);
+        assert_eq!(results[0].title, "Rust");
+        assert_eq!(results[0].url, "https://a.example/?x=1&y=2");
+        assert_eq!(results[0].snippet, "A language empowering <everyone>");
+        assert_eq!(results[0].published_at.as_deref(), Some("Mon, 06 Oct 2025 14:08:07 +0000"));
+        assert_eq!(results[1].snippet, "");
+        assert!(results[1].published_at.is_none());
+        assert!(normalize_yacy_search(&json!({ "channels": [{ "items": [] }] })).is_empty());
+        assert!(normalize_yacy_search(&json!({})).is_empty());
+    }
+
+    const DUCKDUCKGO_PAGE: &str = r#"<html><body><div id="links" class="results">
+        <div class="result results_links results_links_deep result--ad">
+          <div class="links_main links_deep result__body">
+            <h2 class="result__title"><a rel="nofollow" class="result__a" href="https://duckduckgo.com/y.js?ad_domain=ad.example">Sponsored</a></h2>
+            <a class="result__snippet" href="https://duckduckgo.com/y.js?ad_domain=ad.example">Buy now</a>
+          </div>
+        </div>
+        <div class="result results_links results_links_deep web-result">
+          <div class="links_main links_deep result__body">
+            <h2 class="result__title">
+              <a rel="nofollow" class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.rust%2Dlang.org%2Flearn%3Fa%3D1%26b%3D2&amp;rut=0123abcd">Rust <b>Programming</b> Language</a>
+            </h2>
+            <div class="result__extras"><a class="result__url" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.rust%2Dlang.org%2F&amp;rut=0123abcd">www.rust-lang.org</a></div>
+            <a class="result__snippet" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.rust%2Dlang.org%2F&amp;rut=0123abcd">A language <b>empowering</b> everyone &amp; more.</a>
+          </div>
+        </div>
+        <div class="result results_links results_links_deep web-result">
+          <div class="links_main links_deep result__body">
+            <h2 class="result__title"><a rel="nofollow" class="result__a" href="https://direct.example/page">Direct link</a></h2>
+          </div>
+        </div>
+        <div class="result results_links results_links_deep web-result">
+          <div class="links_main links_deep result__body">
+            <h2 class="result__title"><a rel="nofollow" class="result__a" href="https://third.example/">Third</a></h2>
+            <a class="result__snippet" href="https://third.example/">third</a>
+          </div>
+        </div>
+      </div></body></html>"#;
+
+    #[test]
+    fn normalize_duckduckgo_search_maps_contract() {
+        let results = normalize_duckduckgo_search(DUCKDUCKGO_PAGE, 2).unwrap();
+        assert_eq!(results.len(), 2, "the ad is skipped and the count caps the rest");
+        assert_eq!(results[0].title, "Rust Programming Language");
+        assert_eq!(results[0].url, "https://www.rust-lang.org/learn?a=1&b=2");
+        assert_eq!(results[0].snippet, "A language empowering everyone & more.");
+        assert!(results[0].published_at.is_none());
+        assert_eq!(results[1].url, "https://direct.example/page");
+        assert_eq!(results[1].snippet, "");
+        assert_eq!(normalize_duckduckgo_search(DUCKDUCKGO_PAGE, 20).unwrap().len(), 3);
+        assert!(normalize_duckduckgo_search("<html><body></body></html>", 5).unwrap().is_empty());
+    }
+
+    #[test]
+    fn normalize_duckduckgo_search_reports_the_bot_check() {
+        let page = r#"<html><body><form id="challenge-form" action="//duckduckgo.com/anomaly.js?sv=html" method="POST">
+            <div class="anomaly-modal__title">Unfortunately, bots use DuckDuckGo too.</div></form></body></html>"#;
+        let err = normalize_duckduckgo_search(page, 5).unwrap_err();
+        assert!(err.contains("bot check"), "{err}");
+    }
+
+    #[test]
+    fn normalize_bing_search_maps_and_caps() {
+        let xml = r#"<?xml version="1.0" encoding="utf-8" ?><rss version="2.0"><channel><title>Bing: rust</title><link>http://www.bing.com:80/search?q=rust</link><description>Search results</description><image><url>http://www.bing.com:80/s/a/rsslogo.gif</url><title>rust</title><link>http://www.bing.com:80/search?q=rust</link></image><copyright>Copyright</copyright><item><title>Rust Programming Language</title><link>https://rust-lang.org/</link><description>Rust is blazingly fast &amp; memory-efficient.</description><pubDate>Sun, 22 Nov 2026 22:37:00 GMT</pubDate></item><item><title>Rust - Wikipedia</title><link>https://en.wikipedia.org/wiki/Rust_(programming_language)?a=1&amp;b=2</link><description>Rust is a general-purpose programming language.</description><pubDate>Sat, 21 Nov 2026 10:00:00 GMT</pubDate></item><item><title>No description</title><link>https://c.example/</link></item></channel></rss>"#;
+        let results = normalize_bing_search(xml, 20).unwrap();
+        assert_eq!(results.len(), 3);
+        assert_eq!(results[0].title, "Rust Programming Language");
+        assert_eq!(results[0].url, "https://rust-lang.org/");
+        assert_eq!(results[0].snippet, "Rust is blazingly fast & memory-efficient.");
+        assert_eq!(results[0].published_at.as_deref(), Some("Sun, 22 Nov 2026 22:37:00 GMT"));
+        assert_eq!(results[1].url, "https://en.wikipedia.org/wiki/Rust_(programming_language)?a=1&b=2");
+        assert_eq!(results[2].snippet, "");
+        assert!(results[2].published_at.is_none());
+        assert_eq!(normalize_bing_search(xml, 2).unwrap().len(), 2);
+        let empty = r#"<?xml version="1.0" encoding="utf-8" ?><rss version="2.0"><channel><title>Bing: zzz</title></channel></rss>"#;
+        assert!(normalize_bing_search(empty, 5).unwrap().is_empty());
+        assert!(normalize_bing_search("<html><body>blocked</body></html>", 5).is_err());
+    }
+
+    #[test]
+    fn normalize_yandex_search_maps_contract() {
+        let xml = r#"<?xml version="1.0" encoding="utf-8"?>
+<yandexsearch version="1.0">
+<request><query>yandex cloud</query><page>0</page><sortby order="descending" priority="no">rlv</sortby><maxpassages>5</maxpassages><groupings><groupby attr="" mode="flat" groups-on-page="3" docs-in-group="1" curcateg="-1"/></groupings></request>
+<response date="20261123T192041">
+<reqid>1700000000000000-1234567890-host</reqid>
+<found priority="phrase">3</found><found priority="strict">3</found><found priority="all">3</found>
+<found-human>3 results found</found-human>
+<results>
+<grouping attr="" mode="flat" groups-on-page="3" docs-in-group="1" curcateg="-1">
+<page first="1" last="3">0</page>
+<found priority="phrase">3</found><found priority="strict">3</found><found priority="all">3</found>
+<found-docs priority="phrase">3</found-docs><found-docs priority="strict">3</found-docs><found-docs priority="all">3</found-docs>
+<found-docs-human>found 3 results</found-docs-human>
+<group>
+<doccount>1</doccount>
+<relevance priority="all"/>
+<doc id="Z88BF88A0515FA106">
+<relevance priority="all"/>
+<saved-copy-url>https://yandexwebcache.net/yandbtm?a=1&amp;b=2</saved-copy-url>
+<url>https://yandex.cloud/?a=1&amp;b=2</url>
+<domain>yandex.cloud</domain>
+<title><hlword>Yandex</hlword> <hlword>Cloud</hlword> — a reliable cloud</title>
+<modtime>20140422T184117</modtime>
+<size>1475</size>
+<charset>utf-8</charset>
+<mime-type>text/html</mime-type>
+<passages>
+<passage>In <hlword>Yandex</hlword> <hlword>Cloud</hlword> anyone can build.</passage>
+<passage><hlword>Yandex</hlword> <hlword>Cloud</hlword> offers tools &amp; services.</passage>
+</passages>
+<properties><_PassagesType>0</_PassagesType><lang>ru</lang></properties>
+</doc>
+</group>
+<group>
+<doccount>1</doccount>
+<doc id="Z2"><url>https://b.example/</url><domain>b.example</domain><title>Headline only</title><headline>From the page <hlword>description</hlword></headline></doc>
+</group>
+<group>
+<doccount>1</doccount>
+<doc id="Z3"><url>https://c.example/</url><domain>c.example</domain><title>Bare</title></doc>
+</group>
+</grouping>
+</results>
+</response>
+</yandexsearch>"#;
+        let results = normalize_yandex_search(xml).unwrap();
+        assert_eq!(results.len(), 3);
+        assert_eq!(results[0].title, "Yandex Cloud — a reliable cloud");
+        assert_eq!(results[0].url, "https://yandex.cloud/?a=1&b=2");
+        assert_eq!(results[0].snippet, "In Yandex Cloud anyone can build. Yandex Cloud offers tools & services.");
+        assert_eq!(results[0].published_at.as_deref(), Some("20140422T184117"));
+        assert_eq!(results[1].snippet, "From the page description");
+        assert!(results[1].published_at.is_none());
+        assert_eq!(results[2].snippet, "");
+    }
+
+    #[test]
+    fn normalize_yandex_search_tells_no_results_from_errors() {
+        let response = |error: &str| format!(r#"<?xml version="1.0" encoding="utf-8"?><yandexsearch version="1.0"><response date="20261123T192041">{error}<reqid>1-2-3</reqid></response></yandexsearch>"#);
+        let none = response(r#"<error code="15">Sorry, there are no results for this search</error>"#);
+        assert!(normalize_yandex_search(&none).unwrap().is_empty());
+        let limit = response(r#"<error code="32">The daily request limit was exceeded</error>"#);
+        let err = normalize_yandex_search(&limit).unwrap_err();
+        assert!(err.contains("32") && err.contains("daily request limit"), "{err}");
+        assert!(normalize_yandex_search("not xml").is_err());
+    }
+
     /// Live smoke test against keyless `/v1/extract`. Ignored by default (needs
     /// network, spends one free request); run with
     /// `cargo test -- --ignored youcom_fetch_live`.
     #[tokio::test]
     #[ignore]
     async fn youcom_fetch_live_keyless() {
-        let page = YouComProvider::new(None)
+        let page = YouComProvider::new(None, None)
             .unwrap()
             .fetch("https://example.com")
             .await

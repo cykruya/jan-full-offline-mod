@@ -20,7 +20,7 @@ import {
   useWebSearchConfig,
   WEB_SEARCH_PROVIDERS,
   getProviderMeta,
-  providerFavicon,
+  type WebSearchProviderMeta,
 } from '@/hooks/useWebSearchConfig'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -28,12 +28,29 @@ export const Route = createFileRoute(route.settings.web_search as any)({
   component: WebSearchContent,
 })
 
-const ProviderFavicon = ({ src }: { src: string }) => (
-  <img
-    src={src}
-    alt=""
-    className="size-4 shrink-0 rounded-full border border-border/50 bg-white object-contain"
-  />
+type ProviderMenuProps = {
+  label: string
+  selected?: string
+  testId: string
+  onSelect: (provider: WebSearchProviderMeta) => void
+}
+
+const ProviderMenu = ({ label, selected, testId, onSelect }: ProviderMenuProps) => (
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button variant="outline" size="sm" className="justify-between gap-2" data-testid={testId}>
+        <span className="truncate">{label}</span>
+        <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground ml-2" />
+      </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent align="end" className="w-52">
+      {WEB_SEARCH_PROVIDERS.map((p) => (
+        <DropdownMenuItem key={p.id} className={cn('cursor-pointer my-0.5', selected === p.id && 'bg-secondary-foreground/8')} onClick={() => onSelect(p)}>
+          <span className="truncate">{p.label}</span>
+        </DropdownMenuItem>
+      ))}
+    </DropdownMenuContent>
+  </DropdownMenu>
 )
 
 function WebSearchContent() {
@@ -53,6 +70,10 @@ function WebSearchContent() {
   const provider = getProviderMeta(searchProvider)
   const apiKey = apiKeys[provider.id] ?? ''
   const endpoint = endpoints[provider.id] ?? ''
+  const applyPreset = (preset: WebSearchProviderMeta) => {
+    setSearchProvider(preset.id)
+    setEndpoint(preset.id, preset.presetUrl)
+  }
 
   return (
     <div className="flex flex-col h-svh w-full">
@@ -85,65 +106,26 @@ function WebSearchContent() {
                 description={t('settings:webSearch.enableDesc')}
               />
               <CardItem
-                title={t('settings:webSearch.provider')}
-                description={t('settings:webSearch.providerDesc')}
-                actions={
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="justify-between gap-2"
-                      >
-                        <ProviderFavicon src={providerFavicon(provider)} />
-                        <span className="truncate">{provider.label}</span>
-                        <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground ml-2" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-44">
-                      {WEB_SEARCH_PROVIDERS.map((p) => (
-                        <DropdownMenuItem
-                          key={p.id}
-                          className={cn(
-                            'cursor-pointer my-0.5 gap-2',
-                            searchProvider === p.id && 'bg-secondary-foreground/8'
-                          )}
-                          onClick={() => setSearchProvider(p.id)}
-                        >
-                          <ProviderFavicon src={providerFavicon(p)} />
-                          <span className="truncate">{p.label}</span>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                title={t('settings:webSearch.preset')}
+                description={t('settings:webSearch.presetDesc')}
+                actions={<ProviderMenu label={t('settings:webSearch.presetChoose')} testId="web-search-preset" onSelect={applyPreset} />}
+              />
+              <CardItem
+                title={t('settings:webSearch.format')}
+                description={t('settings:webSearch.formatDesc')}
+                actions={<ProviderMenu label={provider.label} selected={provider.id} testId="web-search-format" onSelect={(p) => setSearchProvider(p.id)} />}
+              />
+              <CardItem
+                title={t('settings:webSearch.address')}
+                className="block"
+                description={
+                  <div className="space-y-2">
+                    <p>{t('settings:webSearch.addressDesc')}</p>
+                    <Input type="text" className="w-full" data-testid="web-search-address" placeholder={provider.presetUrl} value={endpoint} onChange={(e) => setEndpoint(provider.id, e.target.value)} />
+                  </div>
                 }
               />
-              {provider.requiresEndpoint ? (
-                <CardItem
-                  title={t('settings:webSearch.endpoint', {
-                    provider: provider.label,
-                  })}
-                  className="block"
-                  description={
-                    <div className="space-y-2">
-                      <p>
-                        {t('settings:webSearch.endpointDesc', {
-                          provider: provider.label,
-                        })}
-                      </p>
-                      <Input
-                        type="text"
-                        className="w-full"
-                        placeholder={t('settings:webSearch.endpointPlaceholder')}
-                        value={endpoint}
-                        onChange={(e) =>
-                          setEndpoint(provider.id, e.target.value)
-                        }
-                      />
-                    </div>
-                  }
-                />
-              ) : (
+              {provider.secretKey && (
                 <CardItem
                   title={t('settings:webSearch.apiKey', {
                     provider: provider.label,
@@ -153,8 +135,8 @@ function WebSearchContent() {
                     <div className="space-y-2">
                       <p>
                         {t(
-                          provider.keyless
-                            ? 'settings:webSearch.apiKeyOptional'
+                          provider.id === 'yandex'
+                            ? 'settings:webSearch.apiKeyYandex'
                             : 'settings:webSearch.apiKeyRequired',
                           { provider: provider.label }
                         )}

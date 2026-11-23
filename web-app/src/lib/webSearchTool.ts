@@ -1,6 +1,6 @@
 import { webSearch, webFetch } from '@janhq/tauri-plugin-websearch-api'
 import { useMCPServers } from '@/hooks/useMCPServers'
-import { useWebSearchConfig } from '@/hooks/useWebSearchConfig'
+import { getProviderMeta, useWebSearchConfig } from '@/hooks/useWebSearchConfig'
 import { TRUNCATION_MARKER } from '@/lib/toolPresentation'
 
 export const WEB_TOOL_NAMES = new Set(['web_search', 'web_fetch'])
@@ -99,13 +99,15 @@ export async function executeWebTool(
   options: { maxOutputChars?: number } = {}
 ): Promise<WebToolResult> {
   const { apiKeys, endpoints, searchProvider } = useWebSearchConfig.getState()
-  const apiKey = apiKeys[searchProvider] || undefined
-  const endpoint = endpoints[searchProvider] || undefined
+  const provider = getProviderMeta(searchProvider)
+  const apiKey = apiKeys[provider.id] || undefined
+  const endpoint = endpoints[provider.id] || undefined
+  if (provider.secretKey && !apiKey) return { error: `${provider.label} requires an API key. Set it in Settings > Web Search.` }
   try {
     if (toolName === 'web_search') {
       const query = typeof input?.query === 'string' ? input.query : ''
       const count = typeof input?.count === 'number' ? input.count : undefined
-      const results = await webSearch(query, count, apiKey, searchProvider, endpoint)
+      const results = await webSearch(query, count, apiKey, provider.backend, endpoint)
       return {
         content: {
           kind: 'web',
@@ -122,7 +124,7 @@ export async function executeWebTool(
     }
     if (toolName === 'web_fetch') {
       const url = typeof input?.url === 'string' ? input.url : ''
-      const page = await webFetch(url, apiKey, searchProvider, endpoint)
+      const page = await webFetch(url, apiKey, provider.backend, endpoint)
       const cap = webOutputCap(options.maxOutputChars)
       let title = page.title
       let address = page.url

@@ -1,20 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const h = vi.hoisted(() => ({
+  webSearch: vi.fn(),
   webFetch: vi.fn(),
+  config: {
+    searchProvider: 'searxng',
+    apiKeys: {} as Record<string, string>,
+    endpoints: {} as Record<string, string>,
+  },
   mcp: {
     settings: { maxToolOutputChars: 40000 } as { maxToolOutputChars?: number },
   },
 }))
 
 vi.mock('@janhq/tauri-plugin-websearch-api', () => ({
-  webSearch: vi.fn(),
+  webSearch: h.webSearch,
   webFetch: h.webFetch,
 }))
-vi.mock('@/hooks/useWebSearchConfig', () => ({
-  useWebSearchConfig: {
-    getState: () => ({ apiKeys: {}, endpoints: {}, searchProvider: 'default' }),
-  },
+vi.mock('@/hooks/useWebSearchConfig', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/hooks/useWebSearchConfig')>()),
+  useWebSearchConfig: { getState: () => h.config },
 }))
 vi.mock('@/hooks/useMCPServers', () => ({
   useMCPServers: { getState: () => h.mcp },
@@ -39,8 +44,65 @@ const fetchText = async (maxOutputChars?: number) => {
 }
 
 beforeEach(() => {
+  h.webSearch.mockReset()
   h.webFetch.mockReset()
+  h.config = { searchProvider: 'searxng', apiKeys: {}, endpoints: {} }
   h.mcp.settings = { maxToolOutputChars: 40000 }
+})
+
+describe('the web tools go where the Web Search settings point', () => {
+  it('sends the address and the key of the chosen API format to its backend', async () => {
+    h.config = {
+      searchProvider: 'exa',
+      apiKeys: { exa: 'exa-key', tavily: 'tavily-key' },
+      endpoints: { exa: 'https://api.exa.ai', searxng: 'http://localhost:8080' },
+    }
+    h.webSearch.mockResolvedValue([
+      { title: 'Rust', url: 'https://rust-lang.org/', snippet: 'A language', published_at: '2026-01-01' },
+    ])
+
+    const out = await executeWebTool('web_search', { query: 'rust', count: 3 })
+
+    expect(h.webSearch).toHaveBeenCalledWith('rust', 3, 'exa-key', 'exa', 'https://api.exa.ai')
+    expect(out.content).toEqual({
+      kind: 'web',
+      query: 'rust',
+      results: [
+        { url: 'https://rust-lang.org/', title: 'Rust', text: 'A language', published_date: '2026-01-01', favicon: 'https://www.google.com/s2/favicons?domain=rust-lang.org&sz=64' },
+      ],
+    })
+  })
+
+  it('serves a keyless format from the same backend, without a key', async () => {
+    h.config = {
+      searchProvider: 'exa-mcp',
+      apiKeys: { exa: 'exa-key' },
+      endpoints: { 'exa-mcp': 'https://mcp.exa.ai' },
+    }
+    h.webFetch.mockResolvedValue(page('body'))
+
+    await fetchText()
+
+    expect(h.webFetch).toHaveBeenCalledWith('https://github.com/trending', undefined, 'exa', 'https://mcp.exa.ai')
+  })
+
+  it('refuses a keyed format that has no key, before any request', async () => {
+    h.config = { searchProvider: 'you', apiKeys: {}, endpoints: { you: 'https://ydc-index.io' } }
+
+    const out = await executeWebTool('web_search', { query: 'rust' })
+
+    expect(out.error).toContain('You.com requires an API key')
+    expect(h.webSearch).not.toHaveBeenCalled()
+  })
+
+  it('leaves a missing address to the plugin, which refuses it', async () => {
+    h.webSearch.mockRejectedValue({ message: 'Web search has no address or API format.' })
+
+    const out = await executeWebTool('web_search', { query: 'rust' })
+
+    expect(h.webSearch).toHaveBeenCalledWith('rust', undefined, undefined, 'searxng', undefined)
+    expect(out.error).toBe('Web search has no address or API format.')
+  })
 })
 
 describe('web_fetch output is held to the same budget as an MCP result', () => {
