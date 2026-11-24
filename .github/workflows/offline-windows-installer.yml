@@ -34,9 +34,21 @@ jobs:
           path: src-tauri/resources/help/Jan.chm
           if-no-files-found: error
 
+  # One CUDA major per installer, as the engine build carries one toolkit:
+  # CUDA 13 runs on RTX 20 / GTX 16 cards and newer, CUDA 12 on the older ones
+  # down to GTX 900. CUDA 12 rejects Visual Studio 2026, which windows-2025
+  # carries, so it builds on windows-2022.
   installer:
     needs: help
-    runs-on: windows-2025
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: cuda13-vulkan
+            runner: windows-2025
+          - variant: cuda12-vulkan
+            runner: windows-2022
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v6.0.2
 
@@ -65,12 +77,11 @@ jobs:
           corepack prepare yarn@4.5.3 --activate
           yarn config set -H enableImmutableInstalls false
 
-      # The variant of the official releases: CUDA 13 for NVIDIA, Vulkan for
-      # every other GPU, CPU as the fallback.
+      # CUDA for NVIDIA, Vulkan for every other GPU, CPU as the fallback.
       - name: Set up the llama.cpp engine toolchain
         uses: ./.github/actions/setup-engine-toolchain
         with:
-          variant: cuda13-vulkan
+          variant: ${{ matrix.variant }}
 
       - uses: actions/download-artifact@v4.3.0
         with:
@@ -78,9 +89,12 @@ jobs:
           path: src-tauri/resources/help
 
       # `make build` without `yarn build:help`, whose output the help job made.
+      # Long paths are switched on in git because the checkout sits deep enough
+      # for llama.cpp's longest source paths to cross the 260-character limit.
       - name: Build the installer
         shell: bash
         run: |
+          git config --global core.longpaths true
           make install-and-build
           make build-engine
           yarn build:icon
@@ -90,6 +104,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4.6.2
         with:
-          name: jan-offline-windows-x64
+          name: jan-offline-windows-x64-${{ matrix.variant }}
           path: src-tauri/target/release/bundle/nsis/*.exe
           if-no-files-found: error
