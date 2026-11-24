@@ -36,19 +36,18 @@ jobs:
 
   # One CUDA major per installer, as the engine build carries one toolkit:
   # CUDA 13 runs on RTX 20 / GTX 16 cards and newer, CUDA 12 on the older ones
-  # down to GTX 900. CUDA 12 rejects Visual Studio 2026, which windows-2025
-  # carries, so it builds on windows-2022.
+  # down to GTX 900.
+  #
+  # windows-2022 rather than windows-2025: that image carries Visual Studio
+  # 2026, which CUDA 12 rejects and whose headers crash the CUDA 13.2 compiler
+  # front end (cudafe++).
   installer:
     needs: help
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - variant: cuda13-vulkan
-            runner: windows-2025
-          - variant: cuda12-vulkan
-            runner: windows-2022
-    runs-on: ${{ matrix.runner }}
+        variant: [cuda13-vulkan, cuda12-vulkan]
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v6.0.2
 
